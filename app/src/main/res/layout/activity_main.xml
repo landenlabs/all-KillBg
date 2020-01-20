@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/app_list_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="5dp"
+    tools:context=".MainActivity">
+
+    <RelativeLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/leftStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            tools:text="#Items: 999" />
+
+        <TextView
+            android:id="@+id/centerStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="18sp"
+            tools:text="--List---" />
+
+        <TextView
+            android:id="@+id/rightStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:textSize="18sp"
+            tools:text="Free Memory: 999 MB" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/filterBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/topBar"
+        android:background="#aaa"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/killbg" />
+
+        <RadioGroup
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/show_pkg"
+                style="@style/Btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="true"
+                android:textColor="@drawable/btn_color_state"
+                android:button="@drawable/radio_btn_selector"
+                android:focusable="true"
+                android:text="Show\nApps" />
+
+            <RadioButton
+                android:id="@+id/show_proc"
+                style="@style/Btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:textColor="@drawable/btn_color_state"
+                android:button="@drawable/radio_btn_selector"
+                android:layout_weight="1"
+                android:text="Show\nProcess" />
+
+        </RadioGroup>
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/dataList"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/botBar"
+        android:layout_below="@+id/filterBar"
+        android:background="@drawable/paper_dark"
+        tools:listitem="@layout/list_row_pkg" />
+
+    <LinearLayout
+        android:id="@+id/botBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="#aaa"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/kill_all"
+            style="@style/Btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Stop All\nApps" />
+
+        <Button
+            android:id="@+id/killService"
+            style="@style/Btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Kill\nService" />
+
+        <Button
+            android:id="@+id/killListMgr"
+            style="@style/Btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Edit\nStop List" />
+    </LinearLayout>
+</RelativeLayout>

@@ -1,0 +1,79 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+        applicationId "com.landenlabs.all_killbg"
+        minSdkVersion 17
+        targetSdkVersion 28
+        versionCode 10119
+        versionName "1.01.19"
+
+        // Limit languages to following list.
+        resConfigs "en", "es"
+
+        ndk {
+            // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
+    }
+
+    // Save app version in string so resource can be used in layouts
+    applicationVariants.all { variant ->
+        variant.resValue "string", "versionName", "version " + variant.versionName
+    }
+
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+        disable 'DefaultLocale', 'SimpleDateFormat', 'InflateParams', 'SpUsage',
+                'UseCompoundDrawables', 'HandlerLeak', 'ViewConstructor', 'SetTextI18n',
+                'RtlSymmetry', 'RtlHardcoded', 'ContentDescription',
+                'MissingTranslation', 'ValidFragment', 'UnusedAttribute',
+                'FieldCanBeLocal', 'LocalSuppress', 'HardcodedText', 'Typos'
+    }
+
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            // Enable verbose lint reporting during build.
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+    }
+
+    productFlavors {
+    }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    // implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+
+    implementation 'com.jaredrummler:android-processes:1.1.1'
+}
+
+// Rename app
+android.applicationVariants.all { variant ->
+    variant.outputs.all {
+        def ourname = project.parent.name
+        outputFileName = "$ourname-${variant.name}-${variant.versionName}.apk"
+        println "out name= $outputFileName"
+    }
+}

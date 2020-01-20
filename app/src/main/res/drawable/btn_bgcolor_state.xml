@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<selector
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true" >
+        <nine-patch android:src="@drawable/underline3nsg"
+            />
+    </item>
+    <!-- <item android:state_focused="true"  android:drawable="@color/focused_color"/> -->
+    <!-- android:tint="?attr/colorControlActivated" -->
+    <item  android:state_focused="true">
+        <nine-patch android:src="@drawable/underline2"
+             />
+    </item>
+
+    <!--
+    @drawable/abc_textfield_activated_mtrl_alpha
+    <item android:drawable="@color/default_color"/>
+
+     <nine-patch android:src="@drawable/shadow7" />
+    -->
+    <item>
+        <nine-patch android:src="@drawable/shadow7" />
+    </item>
+</selector>

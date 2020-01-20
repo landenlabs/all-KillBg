@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="5dp">
+
+    <TextView
+        style="@style/DetailApp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="PID" />
+
+    <TextView
+        android:id="@+id/detailPid"
+        style="@style/Detail2App"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="1234" />
+
+    <TextView
+        style="@style/DetailApp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="UID" />
+
+    <TextView
+        android:id="@+id/detailUid"
+        style="@style/Detail2App"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="1234" />
+
+    <TextView
+        style="@style/DetailApp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Pkg" />
+
+    <TextView
+        android:id="@+id/detailName"
+        style="@style/Detail2App"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="com.foo.bar" />
+
+    <TextView
+        style="@style/DetailApp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Importance" />
+
+    <TextView
+        android:id="@+id/detailImportance"
+        style="@style/Detail2App"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="blah blah" />
+
+    <TextView
+        style="@style/DetailApp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Reason Code" />
+
+    <TextView
+        android:id="@+id/detailImportanceReasonCode"
+        style="@style/Detail2App"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="reason" />
+
+    <TextView
+        style="@style/DetailApp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Reason PID" />
+
+    <TextView
+        android:id="@+id/detailImportanceReasonPid"
+        style="@style/Detail2App"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="blah blah" />
+
+    <TextView
+        style="@style/DetailApp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Proc LRU" />
+
+    <TextView
+        android:id="@+id/detailLru"
+        style="@style/Detail2App"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        style="@style/DetailApp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Pkg Name List" />
+
+    <TextView
+        android:id="@+id/detailPkgNameList"
+        style="@style/Detail2App"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="blah blah" />
+
+</LinearLayout>

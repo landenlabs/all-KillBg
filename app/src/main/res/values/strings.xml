@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">all KillBg</string>
+    <string name="menu_settings">Menu Settings</string>
+
+    <string name="proNum">Items: </string>
+    <string name="freeMem">Free Mem: </string>
+
+    <string name="refresh">Refresh</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="tasks">Tasks</string>
+
+    <string-array name="operation">
+        <item>Kill Bg</item>
+        <item>Show Detail</item>
+        <item>Add to Kill List</item>
+    </string-array>
+
+    <string name="activity_proc_details">ProcDetails</string>
+    <string name="activity_kill_list">KillList</string>
+    <string name="action_settings">Kill Menu</string>
+
+</resources>

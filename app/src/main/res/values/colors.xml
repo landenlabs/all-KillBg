@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="primary_dark">#000</color>
+    <color name="primary">#ff0000</color>
+    <color name="accent">#00ff00</color>
+
+    <color name="pressed_color">#f0f</color>
+    <color name="focused_color">#484</color>
+    <color name="default_color">#333</color>
+
+    <color name="btn_default">#888</color>
+    <color name="text_shadow">#111</color>
+
+    <color name="list_select_color">#8050e050</color>
+    <color name="list_pressed_color">#ff30c030</color>
+
+    <color name="ripple_white_borderless_color">#40ffffff</color>
+    <color name="ripple_white_borderless_color_mask">#c9ffffff</color>
+</resources>
