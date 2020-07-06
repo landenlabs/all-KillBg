@@ -13,12 +13,19 @@ android {
         // Limit languages to following list.
         resConfigs "en", "es"
 
-        ndk {
-            // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
-            abiFilters 'armeabi-v7a', 'arm64-v8a'
-        }
     }
 
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            ndk {
+                // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+                abiFilters 'armeabi-v7a', 'arm64-v8a'
+            }
+        }
+    }
     // Save app version in string so resource can be used in layouts
     applicationVariants.all { variant ->
         variant.resValue "string", "versionName", "version " + variant.versionName

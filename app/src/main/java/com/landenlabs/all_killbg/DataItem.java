@@ -22,5 +22,4 @@ class DataItem {
 
     public String name;
     public String pkgName;
-
 }

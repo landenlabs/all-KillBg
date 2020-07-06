@@ -14,6 +14,18 @@ package com.landenlabs.all_killbg;
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Documentation:
+ *   Remote key code events:
+ *     https://developer.amazon.com/docs/fire-tv/remote-input.html
+ *  KEYCODE_DPAD_CENTER
+ *     https://developer.android.com/guide/topics/ui/accessibility/custom-views
+ *
+ *    https://developer.android.com/guide/topics/ui/accessibility/custom-views#directional-control
+ *
+ *    https://developer.android.com/guide/topics/ui/accessibility/custom-views#directional-control
+ *
+ *    https://developer.android.com/training/tv/start/controllers#media-events
  */
 
 import android.app.Activity;
@@ -29,8 +41,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.format.Formatter;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -43,11 +58,14 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import com.landenlabs.all_killbg.AppPackageManager.PkgInfo;
 import com.landenlabs.all_killbg.AppProcessManager.ProcInfo;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @SuppressWarnings("Convert2Lambda")
 public class MainActivity extends Activity {
@@ -175,6 +193,7 @@ public class MainActivity extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         //  menu.add(0, TASK, 0, "Task");
+        // TODO - add "about" menu
         menu.add(0, EXIT, 0, "Exit");
         return super.onCreateOptionsMenu(menu);
     }
@@ -190,6 +209,46 @@ public class MainActivity extends Activity {
         }
         return true;
     }
+
+    /*
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        Log.d("DDD", "dispatchKey=" + event.toString());
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        Log.d("DDD", "onKeyDown=" + event.toString());
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        Log.d("DDD", "onTouchEvent=" + event.toString());
+        return super.onTouchEvent(event);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        Log.d("DDD", "dispatchTouchEvent=" + ev.toString());
+        return super.dispatchTouchEvent(ev);
+    }
+
+    @Override
+    public boolean dispatchGenericMotionEvent(MotionEvent ev) {
+        Log.d("DDD", "dispatchGenericMotionEvent=" + ev.toString());
+        return super.dispatchGenericMotionEvent(ev);
+    }
+
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent event) {
+        Log.d("DDD", "onGenericMotionEvent=" + event.toString());
+        return super.onGenericMotionEvent(event);
+    }
+     */
+
+// ----- Private
 
     // Save list state, position and focus
     private void saveState() {

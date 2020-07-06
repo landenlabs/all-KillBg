@@ -27,10 +27,15 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
+import java.io.File;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -81,6 +86,14 @@ class AppPackageManager {
                 pkgInfo.label = packageManager.getApplicationLabel(appInfo).toString();
                 pkgInfo.pkgName = appInfo.packageName;
                 pkgInfo.processName = appInfo.processName;
+
+                File file = new File(appInfo.sourceDir);
+                pkgInfo.pkgSize = file.length();
+                pkgInfo.targetSdkVersion = appInfo.targetSdkVersion;
+
+                // todo get network usage using appInfo.uid;
+                // appInfo.storageUuid;
+
                 dataList.add(pkgInfo);
                 pkgList.add(appInfo.packageName);
             }
@@ -101,8 +114,30 @@ class AppPackageManager {
                     pkgInfo.label = packageManager.getApplicationLabel(appInfo).toString();
                     pkgInfo.pkgName = appInfo.packageName;
                     pkgInfo.processName = appInfo.processName;
+
+                    File file = new File(appInfo.sourceDir);
+                    pkgInfo.pkgSize = file.length();
+                    pkgInfo.targetSdkVersion = appInfo.targetSdkVersion;
+
+                    // todo get network usage using appInfo.uid;
+                    // appInfo.storageUuid;
+
                     dataList.add(pkgInfo);
                     pkgList.add(appInfo.packageName);
+                }
+            }
+        }
+
+        int flags = 0; // PackageManager.MATCH_ALL;
+        List<PackageInfo> packList = packageManager.getInstalledPackages(flags);
+        if (packList != null) {
+            for (int idx = 0; idx < packList.size(); idx++) {
+                PackageInfo packInfo = packList.get(idx);
+                if (pkgList.contains(packInfo.packageName)) {
+                    PkgInfo pkgInfo = findPkgInfo(packInfo.packageName);
+                    if (pkgInfo != null)  {
+                        pkgInfo.packInfo = packInfo;
+                    }
                 }
             }
         }
@@ -110,12 +145,22 @@ class AppPackageManager {
         action.done(this, PkgAction.STATUS_OK, "");
     }
 
+    private PkgInfo findPkgInfo(String packageName) {
+        for (PkgInfo pkgInfo : dataList) {
+            if (packageName.equals(pkgInfo.pkgName)) {
+                return pkgInfo;
+            }
+        }
+        return null;
+    }
+
     private static boolean isStopped(ApplicationInfo appInfo) {
         return (appInfo.flags & ApplicationInfo.FLAG_STOPPED /* 0x200000 */) != 0;
     }
 
     private static boolean isSystem(ApplicationInfo appInfo) {
-        return (appInfo.flags & ApplicationInfo.FLAG_SYSTEM /* 0x1 */) != 0;
+        // return (appInfo.flags & ApplicationInfo.FLAG_SYSTEM /* 0x1 */) != 0;
+        return false;
     }
 
     // =============================================================================================
@@ -123,10 +168,38 @@ class AppPackageManager {
     static class PkgInfo extends DataItem {
         String label;
         String processName;
+        int targetSdkVersion;
+
+        long pkgSize;
+        PackageInfo packInfo;
+
+        private static SimpleDateFormat s_timeFormat = new SimpleDateFormat("MM/dd/yyyy  HH:mm");
 
         @NonNull
         public String toString() {
-            return label + "\n" + pkgName + "\n" + processName;
+            String msg;
+            if (pkgName.equals(processName)) {
+                msg = label + "\n" + pkgName;
+            } else {
+                msg = label + "\n" + pkgName + "\n" + processName;
+            }
+
+            if (packInfo != null) {
+                if (packInfo.firstInstallTime != packInfo.lastUpdateTime) {
+                    msg += "\nInstall First " + s_timeFormat.format(packInfo.firstInstallTime);
+                    msg += "\nInstall Last " + s_timeFormat.format(packInfo.lastUpdateTime);
+                } else {
+                    msg += "\nInstalled " + s_timeFormat.format(packInfo.firstInstallTime);
+                }
+
+                msg += "\nTarget SDK " + targetSdkVersion;
+                msg += "\nVersion " + packInfo.versionName;
+            }
+
+            if (pkgSize != 0) {
+                msg += "\nPackage Size " + NumberFormat.getNumberInstance(Locale.getDefault()).format(pkgSize);
+            }
+            return msg;
         }
     }
 
