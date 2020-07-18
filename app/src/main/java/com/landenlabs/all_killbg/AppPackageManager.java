@@ -177,6 +177,9 @@ class AppPackageManager {
 
         @NonNull
         public String toString() {
+
+            // TODO - generate tabular columns, sortable, etc.
+            
             String msg;
             if (pkgName.equals(processName)) {
                 msg = label + "\n" + pkgName;

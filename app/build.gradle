@@ -12,7 +12,6 @@ android {
 
         // Limit languages to following list.
         resConfigs "en", "es"
-
     }
 
     buildTypes {
@@ -31,12 +30,14 @@ android {
         variant.resValue "string", "versionName", "version " + variant.versionName
     }
 
-
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+
+    productFlavors {
     }
 
     lintOptions {
@@ -53,9 +54,6 @@ android {
             // Enable verbose lint reporting during build.
             options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
         }
-    }
-
-    productFlavors {
     }
 
     packagingOptions {
