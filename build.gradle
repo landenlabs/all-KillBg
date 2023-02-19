@@ -4,14 +4,13 @@
 buildscript {
     repositories {
         // println "==== Gradle version " + GradleVersion.current().getVersion()
-        google() // Gradle 4.0+
-        jcenter()
+        google()
+        mavenCentral()
     }
     dependencies {
         // https://developer.android.com/studio/releases/gradle-plugin
         // https://gradle.org/releases/
-        //
-        classpath 'com.android.tools.build:gradle:4.0.1'
+        classpath 'com.android.tools.build:gradle:7.3.1' // AndroidStudio eel
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -21,8 +20,8 @@ buildscript {
 // Provide configuration to build Android projects.
 allprojects {
     repositories {
-        google() // Gradle 4.0+
-        jcenter()
+        google()
+        mavenCentral()
     }
 }
 
