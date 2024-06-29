@@ -16,13 +16,14 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * @author Dennis Lang
- * @see http://LanDenLabs.com/
+ * @see https://landenLabs.com/
  */
 
 package com.landenlabs.all_killbg;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -54,8 +55,7 @@ public class KillListActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_kill_list);
         blackName = new ArrayList<>();
-        SharedPreferences preference =
-                PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences preference = getSharedPreferences("main", Context.MODE_PRIVATE);
         blackName.clear();
         int size = preference.getInt("Status_size", 0);
         for (int i = 0; i < size; i++) {
@@ -110,7 +110,7 @@ public class KillListActivity extends Activity {
     }
 
     private void saveArray() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences preferences = getSharedPreferences("main", Context.MODE_PRIVATE);
         SharedPreferences.Editor mEdit = preferences.edit();
         mEdit.putInt("Status_size", blackName.size());
         for (int i = 0; i < blackName.size(); i++) {

@@ -16,7 +16,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * @author Dennis Lang
- * @see http://LanDenLabs.com/
+ * @see https://landenLabs.com/
  */
 
 package com.landenlabs.all_killbg;
@@ -177,7 +177,7 @@ class AppPackageManager {
         long pkgSize;
         PackageInfo packInfo;
 
-        private static SimpleDateFormat s_timeFormat = new SimpleDateFormat("MM/dd/yyyy  HH:mm");
+        private static final SimpleDateFormat s_timeFormat = new SimpleDateFormat("MM/dd/yyyy  HH:mm");
 
         @NonNull
         public String toString() {

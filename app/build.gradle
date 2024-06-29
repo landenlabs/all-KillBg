@@ -1,17 +1,26 @@
-apply plugin: 'com.android.application'
+// All-KillBg
+// module build.gradle
+
+plugins {
+    id ("com.android.application")
+    id ("org.jetbrains.kotlin.android") // Prevents duplicate kotlin warnings
+}
 
 android {
-    compileSdkVersion 33
+    compileSdk  34
+    namespace "com.landenlabs.all_killbg"
 
     defaultConfig {
         applicationId "com.landenlabs.all_killbg"
-        minSdkVersion 23
-        targetSdkVersion 33
-        versionCode 10119
-        versionName "1.01.19"
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode 10629
+        versionName "1.06.29"
 
         // Limit languages to following list.
         resConfigs "en", "es"
+
+        buildConfigField "long", "BuildTimeMilli", System.currentTimeMillis() + "L"
     }
 
     buildTypes {
@@ -26,21 +35,11 @@ android {
         }
     }
     // Save app version in string so resource can be used in layouts
-    applicationVariants.all { variant ->
+    applicationVariants.configureEach { variant ->
         variant.resValue "string", "versionName", "version " + variant.versionName
     }
 
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
-
-    productFlavors {
-    }
-
-    lintOptions {
+    lint {
         abortOnError false
         disable 'DefaultLocale', 'SimpleDateFormat', 'InflateParams', 'SpUsage',
                 'UseCompoundDrawables', 'HandlerLeak', 'ViewConstructor', 'SetTextI18n',
@@ -50,32 +49,22 @@ android {
     }
 
     gradle.projectsEvaluated {
-        tasks.withType(JavaCompile) {
-            // Enable verbose lint reporting during build.
-            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        tasks.withType(JavaCompile).tap {
+            configureEach {
+                // Enable verbose lint reporting during build.
+                options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+            }
         }
-    }
-
-    packagingOptions {
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/NOTICE.txt'
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
 dependencies {
-    // implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-
+    implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.jaredrummler:android-processes:1.1.1'
 }
 
 // Rename app
-android.applicationVariants.all { variant ->
+android.applicationVariants.configureEach { variant ->
     variant.outputs.all {
         def ourname = project.parent.name
         outputFileName = "$ourname-${variant.name}-${variant.versionName}.apk"

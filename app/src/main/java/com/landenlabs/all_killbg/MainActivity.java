@@ -16,7 +16,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * @author Dennis Lang
- * @see http://LanDenLabs.com/
+ * @see https://landenLabs.com/
  */
 
 package com.landenlabs.all_killbg;
@@ -34,11 +34,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.format.Formatter;
-import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -55,10 +52,8 @@ import android.widget.Toast;
 import com.landenlabs.all_killbg.AppPackageManager.PkgInfo;
 import com.landenlabs.all_killbg.AppProcessManager.ProcInfo;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 @SuppressWarnings("Convert2Lambda")
 public class MainActivity extends Activity {
@@ -468,7 +463,7 @@ public class MainActivity extends Activity {
     }
 
     private void saveKillList() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences preferences = getSharedPreferences("main", Context.MODE_PRIVATE);
         SharedPreferences.Editor mEdit = preferences.edit();
         mEdit.putInt("Status_size", killList.size());
         for (int i = 0; i < killList.size(); i++) {
@@ -479,7 +474,7 @@ public class MainActivity extends Activity {
     }
 
     private void loadKillList(Context context) {
-        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences preference = getSharedPreferences("main", Context.MODE_PRIVATE);
         killList.clear();
         int size = preference.getInt("Status_size", 0);
         for (int i = 0; i < size; i++) {

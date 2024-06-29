@@ -16,7 +16,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * @author Dennis Lang
- * @see http://LanDenLabs.com/
+ * @see https://landenLabs.com/
  */
 
 package com.landenlabs.all_killbg;
@@ -24,10 +24,12 @@ package com.landenlabs.all_killbg;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
@@ -54,7 +56,7 @@ public class KillService extends Service {
         super.onCreate();
 
         myActivityManagerService = (ActivityManager) getSystemService(Activity.ACTIVITY_SERVICE);
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences pref = getSharedPreferences("main", Context.MODE_PRIVATE);
         int size = pref.getInt("Status_size", 0);
 
         blackName = new ArrayList<>();
@@ -67,7 +69,7 @@ public class KillService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flag, int startid) {
         Toast.makeText(this, "Service is Running", Toast.LENGTH_LONG).show();
-        final Handler myHandler = new Handler() {
+        final Handler myHandler = new Handler(Looper.myLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 if (msg.what == SRV_KILL_MSG) {

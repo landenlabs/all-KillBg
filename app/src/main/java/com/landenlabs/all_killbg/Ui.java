@@ -16,7 +16,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * @author Dennis Lang
- * @see http://LanDenLabs.com/
+ * @see https://landenLabs.com/
  */
 
 package com.landenlabs.all_killbg;
@@ -33,7 +33,7 @@ import android.widget.AdapterView;
  */
 public class Ui {
 
-    private static int CLICK_DELAY_MILLIS = (Build.VERSION.SDK_INT >= 21) ? 2500 : 0;
+    private static final int CLICK_DELAY_MILLIS = (Build.VERSION.SDK_INT >= 21) ? 2500 : 0;
 
     private Ui() {
     }
