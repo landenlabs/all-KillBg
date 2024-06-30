@@ -388,7 +388,7 @@ public class MainActivity extends Activity {
                             makeToast("Refresh Completed");
                             upDateMemInfo();
                         } else {
-                            makeToast("Failed to load processse " + msg);
+                            makeToast("Failed to load process " + msg);
                         }
                     }
                 });
