@@ -65,7 +65,7 @@ dependencies {
 
 // Rename app
 android.applicationVariants.configureEach { variant ->
-    variant.outputs.all {
+    variant.outputs.configureEach {
         def ourname = project.parent.name
         outputFileName = "$ourname-${variant.name}-${variant.versionName}.apk"
         println "out name= $outputFileName"

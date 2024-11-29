@@ -11,7 +11,7 @@ buildscript {
     dependencies {
         // https://developer.android.com/studio/releases/gradle-plugin?buildsystem=ndk-build#updating-gradle
         // https://mvnrepository.com/artifact/com.android.tools.build/gradle?repo=google
-        classpath 'com.android.tools.build:gradle:8.5.0'
+        classpath 'com.android.tools.build:gradle:8.5.2'
 
         // For kotlin plugins
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22")
@@ -28,4 +28,5 @@ allprojects {
 
 tasks.register('clean', Delete) {
     delete rootProject.buildDir
+    delete layout.buildDirectory
 }
