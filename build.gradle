@@ -11,7 +11,7 @@ buildscript {
     dependencies {
         // https://developer.android.com/studio/releases/gradle-plugin?buildsystem=ndk-build#updating-gradle
         // https://mvnrepository.com/artifact/com.android.tools.build/gradle?repo=google
-        classpath 'com.android.tools.build:gradle:8.5.2'
+        classpath 'com.android.tools.build:gradle:8.9.0'
 
         // For kotlin plugins
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22")

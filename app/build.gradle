@@ -7,13 +7,13 @@ plugins {
 }
 
 android {
-    compileSdk  34
+    compileSdk  35
     namespace "com.landenlabs.all_killbg"
 
     defaultConfig {
         applicationId "com.landenlabs.all_killbg"
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode 10629
         versionName "1.06.29"
 
@@ -23,6 +23,8 @@ android {
         buildConfigField "long", "BuildTimeMilli", System.currentTimeMillis() + "L"
     }
 
+    buildFeatures.buildConfig = true
+    
     buildTypes {
         release {
             minifyEnabled true
@@ -66,8 +68,8 @@ dependencies {
 // Rename app
 android.applicationVariants.configureEach { variant ->
     variant.outputs.configureEach {
-        def ourname = project.parent.name
-        outputFileName = "$ourname-${variant.name}-${variant.versionName}.apk"
+        def ourName = project.parent.name
+        outputFileName = "$ourName-${variant.name}-${variant.versionName}.apk"
         println "out name= $outputFileName"
     }
 }

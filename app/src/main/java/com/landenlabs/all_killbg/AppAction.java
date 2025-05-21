@@ -16,7 +16,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * @author Dennis Lang
- * @see https://landenLabs.com/
+ * @see https://LanDenLabs.com/
  */
 
 package com.landenlabs.all_killbg;
