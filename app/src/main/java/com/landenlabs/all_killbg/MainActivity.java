@@ -54,6 +54,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -88,8 +89,9 @@ public class MainActivity extends Activity {
     private DisplayType displayType = DisplayType.Packages;
     private ListAdapter arrayAdapter;
     private ListView dataList;
-    private TextView leftStatusTv;
     private TextView rightStatusTv;
+    private RadioButton showPkgBtn;
+    private RadioButton showProcBtn;
 
 
     // =============================================================================================
@@ -102,8 +104,11 @@ public class MainActivity extends Activity {
         //   setHasOptionsMenu(true);
 
         rightStatusTv = findViewById(R.id.rightStatus);
-        leftStatusTv = findViewById(R.id.leftStatus);
         dataList = findViewById(R.id.dataList);
+        
+        showPkgBtn = findViewById(R.id.show_pkg);
+        showProcBtn = findViewById(R.id.show_proc);
+
         myActivityManager = (ActivityManager) getSystemService(Activity.ACTIVITY_SERVICE);
         appPackageManager = new AppPackageManager(this);
         appProcessManager = new AppProcessManager(this);
@@ -554,11 +559,16 @@ public class MainActivity extends Activity {
         String freeMemSize = Formatter.formatFileSize(getBaseContext(), memSize);
         rightStatusTv.setText("Free Memory: " + freeMemSize);
 
-        String leftStatus = "";
         if (arrayAdapter != null) {
-            leftStatus = "#Items: " + arrayAdapter.getCount();
+            int count = arrayAdapter.getCount();
+            if (displayType == DisplayType.Packages) {
+                showPkgBtn.setText("Show Apps\n(" + count + ")");
+                showProcBtn.setText("Show\nProcess");
+            } else {
+                showPkgBtn.setText("Show\nApps");
+                showProcBtn.setText("Show Proc\n(" + count + ")");
+            }
         }
-        leftStatusTv.setText(leftStatus);
     }
 
     @SuppressWarnings("deprecation")
