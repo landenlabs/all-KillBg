@@ -2,74 +2,88 @@
 // module build.gradle
 
 plugins {
-    id ("com.android.application")
-    id ("org.jetbrains.kotlin.android") // Prevents duplicate kotlin warnings
+    alias(libs.plugins.android.application)
 }
 
 android {
-    compileSdk  35
-    namespace "com.landenlabs.all_killbg"
+    namespace = "com.landenlabs.all_killbg"
+    compileSdk = 36
 
     defaultConfig {
-        applicationId "com.landenlabs.all_killbg"
-        minSdkVersion 21
-        targetSdkVersion 35
-        versionCode 10629
-        versionName "1.06.29"
+        applicationId = "com.landenlabs.all_killbg"
+        minSdk = 21
+        targetSdk = 36
+
+        versionCode = 60419
+        versionName = '6.04.19' // 2026 April(04) 19th
+        // Restore the versionName resource for layouts
+        resValue "string", "versionName", "v" + versionName
 
         // Limit languages to following list.
-        resConfigs "en", "es"
+        resConfigs("en", "es")
 
-        buildConfigField "long", "BuildTimeMilli", System.currentTimeMillis() + "L"
+        buildConfigField("long", "BuildTimeMilli", "${System.currentTimeMillis()}L")
     }
 
-    buildFeatures.buildConfig = true
-    
-    buildTypes {
-        release {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 
-            ndk {
-                // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
-                abiFilters 'armeabi-v7a', 'arm64-v8a'
-            }
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
         }
     }
-    // Save app version in string so resource can be used in layouts
-    applicationVariants.configureEach { variant ->
-        variant.resValue "string", "versionName", "version " + variant.versionName
+
+    buildFeatures {
+        buildConfig = true
+        resValues = true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled = true
+            proguardFiles(getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro')
+
+            ndk {
+                abiFilters("armeabi-v7a", "arm64-v8a")
+            }
+        }
     }
 
     lint {
-        abortOnError false
-        disable 'DefaultLocale', 'SimpleDateFormat', 'InflateParams', 'SpUsage',
-                'UseCompoundDrawables', 'HandlerLeak', 'ViewConstructor', 'SetTextI18n',
-                'RtlSymmetry', 'RtlHardcoded', 'ContentDescription',
-                'MissingTranslation', 'ValidFragment', 'UnusedAttribute',
-                'FieldCanBeLocal', 'LocalSuppress', 'HardcodedText', 'Typos'
+        abortOnError = false
+        disable += [
+            'DefaultLocale', 'SimpleDateFormat', 'InflateParams', 'SpUsage',
+            'UseCompoundDrawables', 'HandlerLeak', 'ViewConstructor', 'SetTextI18n',
+            'RtlSymmetry', 'RtlHardcoded', 'ContentDescription',
+            'MissingTranslation', 'ValidFragment', 'UnusedAttribute',
+            'FieldCanBeLocal', 'LocalSuppress', 'HardcodedText', 'Typos'
+        ]
     }
 
-    gradle.projectsEvaluated {
-        tasks.withType(JavaCompile).tap {
-            configureEach {
-                // Enable verbose lint reporting during build.
-                options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
-            }
-        }
+    tasks.withType(JavaCompile).configureEach {
+        // Enable verbose lint reporting during build.
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
     }
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'com.jaredrummler:android-processes:1.1.1'
+    implementation(libs.androidx.appcompat)
+    implementation(libs.android.processes)
 }
 
-// Rename app
-android.applicationVariants.configureEach { variant ->
-    variant.outputs.configureEach {
-        def ourName = project.parent.name
-        outputFileName = "$ourName-${variant.name}-${variant.versionName}.apk"
-        println "out name= $outputFileName"
-    }
+// Rename app - Fixed for AGP 9.x using androidComponents
+androidComponents {
+    onVariants(selector().all(), { variant ->
+        variant.outputs.forEach { output ->
+            def ourName = project.parent.name
+            def buildType = variant.buildType
+            def versionStr = variant.outputs[0].versionName.get().replaceAll("-.*", "")
+            def flavor = variant.flavorName ?: ""
+            def newNameRoot = "${ourName}${flavor}-${buildType}-${versionStr}"
+            output.outputFileName.set("${newNameRoot}.apk")
+        }
+    })
 }

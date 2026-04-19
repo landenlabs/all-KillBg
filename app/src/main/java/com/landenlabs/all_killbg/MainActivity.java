@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Dennis Lang (LanDen Labs) landenlabs@gmail.com
+ * Copyright (c) 2026 Dennis Lang (LanDen Labs)
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
@@ -423,6 +423,7 @@ public class MainActivity extends Activity {
         leftStatusTv.setText(leftStatus);
     }
 
+    @SuppressWarnings("deprecation")
     private void makeToast(String str) {
         Toast toast = Toast.makeText(MainActivity.this, str, Toast.LENGTH_SHORT);
         View toastView = toast.getView();
