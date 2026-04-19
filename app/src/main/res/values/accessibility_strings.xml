@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_service_description">Automates clicking Force Stop in app settings to manage background processes.</string>
+</resources>

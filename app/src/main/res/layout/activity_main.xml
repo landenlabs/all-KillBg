@@ -20,12 +20,14 @@
   ~ @see https://landenLabs.com/
   -->
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/app_list_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="5dp"
+    android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
     <RelativeLayout
@@ -54,7 +56,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:textSize="18sp"
-            tools:text="Free Memory: 999 MB" />
+            tools:text="Free Mem: 999 MB" />
+
     </RelativeLayout>
 
     <LinearLayout
@@ -100,6 +103,15 @@
                 android:text="Show\nProcess" />
 
         </RadioGroup>
+
+        <ImageView
+            android:id="@+id/settings_icon"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:layout_marginHorizontal="8dp"
+            android:src="@android:drawable/ic_menu_preferences"
+            android:contentDescription="Settings" />
     </LinearLayout>
 
     <ListView

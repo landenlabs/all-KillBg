@@ -26,9 +26,12 @@ import android.app.ActivityManager;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Debug;
+import android.provider.Settings;
 import androidx.annotation.NonNull;
 
 import com.jaredrummler.android.processes.AndroidProcesses;
@@ -64,9 +67,27 @@ class AppProcessManager {
 
     void killAllBackgroundProcesses() {
         for (ProcInfo procInfo : dataList) {
-            String processName = procInfo.name;
-            activityManager.killBackgroundProcesses(processName);
+            String pkgName = procInfo.pkgName != null ? procInfo.pkgName : procInfo.name;
+
+            // 1. Try standard background kill (mostly ineffective on Android 14+)
+            activityManager.killBackgroundProcesses(pkgName);
+
+            // 2. Trigger Accessibility Automation by opening App Info page
+            if (!pkgName.equals(context.getPackageName())) {
+                openAppDetailSettings(pkgName);
+                // Note: We break here because the Accessibility Service will handle the clicks
+                // and then return to this app. MainActivity.onResume will then be called
+                // to proceed to the next item in the list if automation is still active.
+                break;
+            }
         }
+    }
+
+    private void openAppDetailSettings(String packageName) {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        intent.setData(Uri.parse("package:" + packageName));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
     }
 
     synchronized ArrayList<ProcInfo> getList() {
@@ -74,99 +95,71 @@ class AppProcessManager {
     }
 
     synchronized void loadList(ProcAction action) {
-
         dataList.clear();
 
-        //noinspection ConstantConditions
-        if (false) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
+            UsageStatsManager usm = (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
+            long endTime = System.currentTimeMillis();
+            long startTime = endTime - 1000 * 60 * 60 * 24; // Last 24 hours
 
-                UsageStatsManager usm =
-                        (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
-                long time = System.currentTimeMillis();
-                List<UsageStats> appList =
-                        usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,
-                                time - 1000 * 1000, time);
-                if (appList != null && appList.size() > 0) {
-                    SortedMap<Long, UsageStats> mySortedMap = new TreeMap<>();
-                    for (UsageStats usageStats : appList) {
-                        mySortedMap.put(usageStats.getLastTimeUsed(), usageStats);
+            List<UsageStats> usageStatsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_BEST, startTime, endTime);
 
-                        ProcInfo procInfo = new ProcInfo();
-                        procInfo.name = usageStats.getPackageName();
-                        procInfo.startTime = usageStats.getFirstTimeStamp();
-
-                        dataList.add(procInfo);
+            if (usageStatsList != null && !usageStatsList.isEmpty()) {
+                // Use a map to keep only the most recent entry for each package
+                TreeMap<String, UsageStats> latestStats = new TreeMap<>();
+                for (UsageStats usageStats : usageStatsList) {
+                    String pkg = usageStats.getPackageName();
+                    if (!pkg.equals(context.getPackageName())) {
+                        UsageStats existing = latestStats.get(pkg);
+                        if (existing == null || usageStats.getLastTimeUsed() > existing.getLastTimeUsed()) {
+                            latestStats.put(pkg, usageStats);
+                        }
                     }
                 }
-            } else {
-                ActivityManager am =
-                        (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
-                List<ActivityManager.RunningAppProcessInfo> tasks = am.getRunningAppProcesses();
-            }
-        }
 
-        //noinspection ConstantConditions
-        if (true) {
-            if (Build.VERSION.SDK_INT >= 21) {
-                List<AndroidAppProcess> processes = AndroidProcesses.getRunningAppProcesses();
-                for (AndroidAppProcess process : processes) {
-                    // Get some information about the process
+                for (UsageStats usageStats : latestStats.values()) {
                     ProcInfo procInfo = new ProcInfo();
-                    procInfo.name = process.name;
-
-                    try {
-                        Stat stat = process.stat();
-                        procInfo.pid = stat.getPid();
-                        procInfo.ppid = stat.ppid();
-                        procInfo.startTime = stat.stime();
-                        procInfo.policy = stat.policy();
-                        procInfo.state = String.valueOf(stat.state());
-
-                        Statm statm = process.statm();
-                        procInfo.procSize = statm.getSize();
-                        // procInfo.residentSetSize = statm.getResidentSetSize();
-
-                        PackageInfo pkginfo = process.getPackageInfo(context, 0);
-                        procInfo.pkgName = pkginfo.packageName;
-
-                        dataList.add(procInfo);
-                    } catch (Exception ex) {
-                        action.done(this, ProcAction.STATUS_ERROR, ex.getMessage());
-                        return;
-                    }
+                    procInfo.name = usageStats.getPackageName();
+                    procInfo.pkgName = usageStats.getPackageName();
+                    procInfo.startTime = usageStats.getFirstTimeStamp();
+                    procInfo.state = "Recent";
+                    // Note: We can't get real PID/Size for other apps on modern Android without root
+                    dataList.add(procInfo);
                 }
             } else {
-                List<ActivityManager.RunningAppProcessInfo> mRunningPros =
-                        activityManager.getRunningAppProcesses();
-                if (mRunningPros != null) {
-                    // procCntTv.setText(String.valueOf(mRunningPros.size()));
-
-                    for (ActivityManager.RunningAppProcessInfo proc : mRunningPros) {
-                        // TODO - filter list
-                        ProcInfo procInfo = new ProcInfo();
-                        procInfo.pid = proc.pid;
-                        procInfo.ppid = -1;
-                        procInfo.name = proc.processName;
-                        procInfo.importance = proc.importance;
-                        procInfo.state = ProcInfo.getImportance(proc.importance);
-
-                        int[] myMempid = new int[]{procInfo.pid};
-                        Debug.MemoryInfo[] memoryInfo =
-                                activityManager.getProcessMemoryInfo(myMempid);
-                        procInfo.procSize = memoryInfo[0].getTotalPss();
-
-                        procInfo.pkgName = (proc.pkgList != null) ? proc.pkgList[0] : proc.processName;
-                        dataList.add(procInfo);
-                    }
-                } else {
-                    action.done(this, ProcAction.STATUS_ERROR, "Unabe to get process list");
-                    return;
+                // Fallback: If no usage stats (maybe permission missing), show all installed apps
+                loadInstalledApps();
+            }
+        } else {
+            // Legacy fallback
+            List<ActivityManager.RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
+            if (processes != null) {
+                for (ActivityManager.RunningAppProcessInfo proc : processes) {
+                    ProcInfo procInfo = new ProcInfo();
+                    procInfo.name = proc.processName;
+                    procInfo.pkgName = (proc.pkgList != null && proc.pkgList.length > 0) ? proc.pkgList[0] : proc.processName;
+                    procInfo.importance = proc.importance;
+                    procInfo.state = ProcInfo.getImportance(proc.importance);
+                    dataList.add(procInfo);
                 }
             }
         }
 
         action.done(this, dataList.isEmpty() ? ProcAction.STATUS_ERROR : ProcAction.STATUS_OK, "");
+    }
+
+    private void loadInstalledApps() {
+        List<PackageInfo> pkgs = context.getPackageManager().getInstalledPackages(0);
+        for (PackageInfo pkg : pkgs) {
+            // Filter out system apps if desired, or show all
+            if ((pkg.applicationInfo.flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0) {
+                ProcInfo procInfo = new ProcInfo();
+                procInfo.name = pkg.packageName;
+                procInfo.pkgName = pkg.packageName;
+                procInfo.state = "Installed";
+                dataList.add(procInfo);
+            }
+        }
     }
 
     // =============================================================================================

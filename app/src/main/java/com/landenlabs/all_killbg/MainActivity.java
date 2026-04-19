@@ -21,6 +21,8 @@
 
 package com.landenlabs.all_killbg;
 
+import static com.landenlabs.all_killbg.AppConstants.APP_TAG;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
@@ -29,11 +31,18 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.ImageDecoder;
+import android.graphics.drawable.Animatable;
+import android.graphics.drawable.AnimatedImageDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
+import android.text.TextUtils;
 import android.text.format.Formatter;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -54,6 +63,7 @@ import com.landenlabs.all_killbg.AppProcessManager.ProcInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @SuppressWarnings("Convert2Lambda")
 public class MainActivity extends Activity {
@@ -116,8 +126,13 @@ public class MainActivity extends Activity {
 
         Ui.viewById(this, R.id.kill_all).setOnClickListener(new OnClickListener() {
             public void onClick(View source) {
-                appProcessManager.killAllBackgroundProcesses();
-                updateList();
+                if (isAccessibilityServiceEnabled()) {
+                    KillAccessibilityService.setRunning(true);
+                    appProcessManager.killAllBackgroundProcesses();
+                    updateList();
+                } else {
+                    showAccessibilityDialog();
+                }
             }
         });
 
@@ -143,6 +158,124 @@ public class MainActivity extends Activity {
         appPackageManager.loadPackageIcons(0);  // Should this be async
         loadKillList(this);
         setupListView();
+        updateBottomBarVisibility();
+
+        findViewById(R.id.settings_icon).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showSettingsDialog();
+            }
+        });
+    }
+
+    private void showSettingsDialog() {
+        View dialogView = getLayoutInflater().inflate(R.layout.settings_dialog, null);
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        ImageView aboutImage = dialogView.findViewById(R.id.about_anim_image);
+        TextView versionTv = dialogView.findViewById(R.id.about_version);
+        TextView buildTv = dialogView.findViewById(R.id.about_compile_date);
+
+        // Set version and build info
+        try {
+            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            versionTv.setText("Version: " + versionName);
+        } catch (Exception e) {
+            versionTv.setText("Version: Unknown");
+        }
+        buildTv.setText("Built: " + new java.util.Date(BuildConfig.BuildTimeMilli).toString());
+
+        // Handle animation
+        if (Build.VERSION.SDK_INT >= 28) {
+            try {
+                Drawable decoded = ImageDecoder.decodeDrawable(
+                        ImageDecoder.createSource(getResources(), R.raw.landen_labs_anim));
+                aboutImage.setImageDrawable(decoded);
+                if (decoded instanceof Animatable) {
+                    ((Animatable) decoded).start();
+                }
+            } catch (Exception e) {
+                aboutImage.setImageResource(R.drawable.landen_labs_img);
+            }
+        } else {
+            aboutImage.setImageResource(R.drawable.landen_labs_img);
+        }
+
+        dialogView.findViewById(R.id.about_close_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void updateBottomBarVisibility() {
+        View botBar = findViewById(R.id.botBar);
+        if (botBar != null) {
+            // botBar.setVisibility(isAccessibilityServiceEnabled() ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private boolean isAccessibilityServiceEnabled() {
+        String service = getPackageName() + "/" + KillAccessibilityService.class.getCanonicalName();
+        try {
+            int accessibilityEnabled = Settings.Secure.getInt(getContentResolver(), Settings.Secure.ACCESSIBILITY_ENABLED);
+            if (accessibilityEnabled == 1) {
+                String settingValue = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+                if (settingValue != null) {
+                    TextUtils.SimpleStringSplitter splitter = new TextUtils.SimpleStringSplitter(':');
+                    splitter.setString(settingValue);
+                    while (splitter.hasNext()) {
+                        String accessibilityService = splitter.next();
+                        if (accessibilityService.equalsIgnoreCase(service)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        } catch (Settings.SettingNotFoundException e) {
+            // Ignore
+        }
+
+        Log.w(APP_TAG, "Accessibility service not enabled");
+        return false;
+    }
+
+    private void showAccessibilityDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Permission Required")
+                .setMessage("To automate stopping apps, you must enable the Accessibility Service for 'all KillBg'.\n\n" +
+                        "1. Click 'Go to Settings'\n" +
+                        "2. Find 'all KillBg' in the list\n" +
+                        "3. Turn the switch ON")
+                .setPositiveButton("Go to Settings", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                        startActivityForResult(intent, 0);
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        updateBottomBarVisibility();
+                    }
+                })
+                .show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateBottomBarVisibility();
+        
+        if (!isAccessibilityServiceEnabled()) {
+            showAccessibilityDialog();
+        }
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -178,6 +311,7 @@ public class MainActivity extends Activity {
         super.onRestoreInstanceState(inState);
     }
 
+    /*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         //  menu.add(0, TASK, 0, "Task");
@@ -197,6 +331,7 @@ public class MainActivity extends Activity {
         }
         return true;
     }
+     */
 
     /*
     @Override
@@ -397,6 +532,9 @@ public class MainActivity extends Activity {
     }
 
     private void openAppDetailSettings(DataItem dataItem) {
+        // Manual open from list - do NOT enable automation
+        KillAccessibilityService.setRunning(false);
+
         Intent intent = new Intent("android.settings.APPLICATION_DETAILS_SETTINGS", Uri
                 .fromParts("package", dataItem.pkgName, null));
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
