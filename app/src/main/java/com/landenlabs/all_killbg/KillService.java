@@ -31,7 +31,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
-import android.preference.PreferenceManager;
 import android.widget.Toast;
 
 import java.util.ArrayList;

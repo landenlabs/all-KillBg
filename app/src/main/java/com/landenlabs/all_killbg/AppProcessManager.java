@@ -21,6 +21,8 @@
 
 package com.landenlabs.all_killbg;
 
+import static android.content.Context.ACTIVITY_SERVICE;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.usage.UsageStats;
@@ -29,23 +31,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
-import android.os.Build;
-import android.os.Debug;
 import android.provider.Settings;
-import androidx.annotation.NonNull;
 
-import com.jaredrummler.android.processes.AndroidProcesses;
-import com.jaredrummler.android.processes.models.AndroidAppProcess;
-import com.jaredrummler.android.processes.models.Stat;
-import com.jaredrummler.android.processes.models.Statm;
+import androidx.annotation.NonNull;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedMap;
 import java.util.TreeMap;
-
-import static android.content.Context.ACTIVITY_SERVICE;
 
 /**
  */

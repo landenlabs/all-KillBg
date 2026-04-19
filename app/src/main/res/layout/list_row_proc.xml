@@ -39,13 +39,15 @@
         android:layout_width="wrap_content"
         android:layout_height="64dp" />
 
+    <!--
+        android:background="@drawable/ripple_transparent"
+   -->
     <TextView
         android:id="@+id/list_proc_text"
-        android:textColor="#fff"
+        android:textColor="?attr/listTextColor"
         android:layout_gravity="center"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/ripple_transparent"
         tools:text="this is a test\nthis is another test\nmore test\nagain"
         />
 </LinearLayout>

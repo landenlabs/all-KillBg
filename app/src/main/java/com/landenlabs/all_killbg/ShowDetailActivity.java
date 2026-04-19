@@ -79,20 +79,20 @@ public class ShowDetailActivity extends Activity {
             describe = "";
         }
 
-        setText(Ui.viewById(this, R.id.detailPid), processId);
-        setText(Ui.viewById(this, R.id.detailUid), processUid);
-        setText(Ui.viewById(this, R.id.detailName), processName);
-        setText(Ui.viewById(this, R.id.detailImportance), processImportance + "\n" + describe);
-        setText(Ui.viewById(this, R.id.detailImportanceReasonCode), processImportanceReasonCode);
-        setText(Ui.viewById(this, R.id.detailImportanceReasonPid), processImportanceReasonPid);
-        setText(Ui.viewById(this, R.id.detailLru), processLru);
+        setText(this.findViewById(R.id.detailPid), processId);
+        setText(this.findViewById(R.id.detailUid), processUid);
+        setText(this.findViewById(R.id.detailName), processName);
+        setText(this.findViewById(R.id.detailImportance), processImportance + "\n" + describe);
+        setText(this.findViewById(R.id.detailImportanceReasonCode), processImportanceReasonCode);
+        setText(this.findViewById(R.id.detailImportanceReasonPid), processImportanceReasonPid);
+        setText(this.findViewById(R.id.detailLru), processLru);
 
         StringBuilder packageList = new StringBuilder();
         if (pkgNameList != null) {
             for (String item : pkgNameList)
                 packageList.append(item).append("\n");
         }
-        setText(Ui.<TextView>viewById(this, R.id.detailPkgNameList), packageList.toString());
+        setText(this.findViewById(R.id.detailPkgNameList), packageList.toString());
     }
 
     private static void setText(TextView textView, String msg) {

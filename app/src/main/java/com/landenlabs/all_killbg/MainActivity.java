@@ -22,6 +22,8 @@
 package com.landenlabs.all_killbg;
 
 import static com.landenlabs.all_killbg.AppConstants.APP_TAG;
+import static com.landenlabs.all_killbg.AppConstants.PREF_THEME;
+import static com.landenlabs.all_killbg.SettingDialog.setAppTheme;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -33,7 +35,6 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.ImageDecoder;
 import android.graphics.drawable.Animatable;
-import android.graphics.drawable.AnimatedImageDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -43,8 +44,6 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -55,22 +54,21 @@ import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.landenlabs.all_killbg.AppPackageManager.PkgInfo;
 import com.landenlabs.all_killbg.AppProcessManager.ProcInfo;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 @SuppressWarnings("Convert2Lambda")
 public class MainActivity extends Activity {
 
-    private static final int EXIT = 0x113;
-    private static final int TASK = 0x117;
     private static final int INTENT_APP_DETAILS = 1;
 
     // ---------------------------------------------------------------------------------------------
@@ -97,11 +95,13 @@ public class MainActivity extends Activity {
     // =============================================================================================
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.i(APP_TAG, "onCreate called. savedInstanceState is null: " + (savedInstanceState == null));
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        int savedTheme = prefs.getInt(PREF_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        setAppTheme(savedTheme, null);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // Menu not working.
-        //   setHasOptionsMenu(true);
 
         rightStatusTv = findViewById(R.id.rightStatus);
         dataList = findViewById(R.id.dataList);
@@ -113,7 +113,7 @@ public class MainActivity extends Activity {
         appPackageManager = new AppPackageManager(this);
         appProcessManager = new AppProcessManager(this);
 
-        Ui.viewById(this, R.id.show_pkg).setOnClickListener(new OnClickListener() {
+        this.findViewById(R.id.show_pkg).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
                 displayType = DisplayType.Packages;
@@ -121,7 +121,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        Ui.viewById(this, R.id.show_proc).setOnClickListener(new OnClickListener() {
+        this.findViewById(R.id.show_proc).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
                 displayType = DisplayType.Processes;
@@ -129,7 +129,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        Ui.viewById(this, R.id.kill_all).setOnClickListener(new OnClickListener() {
+        this.findViewById(R.id.kill_all).setOnClickListener(new OnClickListener() {
             public void onClick(View source) {
                 if (isAccessibilityServiceEnabled()) {
                     KillAccessibilityService.setRunning(true);
@@ -141,7 +141,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        Ui.viewById(this, R.id.killService).setOnClickListener(new OnClickListener() {
+        this.findViewById(R.id.killService).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 final Intent intentKillService = new Intent(MainActivity.this, KillService.class);
@@ -149,7 +149,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        Ui.viewById(this, R.id.killListMgr).setOnClickListener(new OnClickListener() {
+        this.findViewById(R.id.killListMgr).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 final Intent intentKillList = new Intent(MainActivity.this, KillListActivity.class);
@@ -168,54 +168,9 @@ public class MainActivity extends Activity {
         findViewById(R.id.settings_icon).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                showSettingsDialog();
+                new SettingDialog().show(MainActivity.this);
             }
         });
-    }
-
-    private void showSettingsDialog() {
-        View dialogView = getLayoutInflater().inflate(R.layout.settings_dialog, null);
-        final AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(dialogView)
-                .create();
-
-        ImageView aboutImage = dialogView.findViewById(R.id.about_anim_image);
-        TextView versionTv = dialogView.findViewById(R.id.about_version);
-        TextView buildTv = dialogView.findViewById(R.id.about_compile_date);
-
-        // Set version and build info
-        try {
-            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-            versionTv.setText("Version: " + versionName);
-        } catch (Exception e) {
-            versionTv.setText("Version: Unknown");
-        }
-        buildTv.setText("Built: " + new java.util.Date(BuildConfig.BuildTimeMilli).toString());
-
-        // Handle animation
-        if (Build.VERSION.SDK_INT >= 28) {
-            try {
-                Drawable decoded = ImageDecoder.decodeDrawable(
-                        ImageDecoder.createSource(getResources(), R.raw.landen_labs_anim));
-                aboutImage.setImageDrawable(decoded);
-                if (decoded instanceof Animatable) {
-                    ((Animatable) decoded).start();
-                }
-            } catch (Exception e) {
-                aboutImage.setImageResource(R.drawable.landen_labs_img);
-            }
-        } else {
-            aboutImage.setImageResource(R.drawable.landen_labs_img);
-        }
-
-        dialogView.findViewById(R.id.about_close_btn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-
-        dialog.show();
     }
 
     private void updateBottomBarVisibility() {
@@ -279,7 +234,7 @@ public class MainActivity extends Activity {
         updateBottomBarVisibility();
         
         if (!isAccessibilityServiceEnabled()) {
-            showAccessibilityDialog();
+            // showAccessibilityDialog();
         }
     }
 
@@ -288,6 +243,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        Log.d(APP_TAG, "onStart");
         updateList();
         restoreState();
     }
@@ -296,85 +252,30 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onStop() {
+        Log.d(APP_TAG, "onStop");
         saveState();
         super.onStop();
     }
 
     @Override
     public void onDestroy() {
+        Log.d(APP_TAG, "onDestroy called. Is finishing: " + isFinishing());
         super.onDestroy();
         saveKillList();
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        Log.d(APP_TAG, "onSaveInstanceState");
         super.onSaveInstanceState(outState);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle inState) {
+        Log.d(APP_TAG, "onRestoreInstanceState");
         super.onRestoreInstanceState(inState);
     }
 
-    /*
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        //  menu.add(0, TASK, 0, "Task");
-        // TODO - add "about" menu
-        menu.add(0, EXIT, 0, "Exit");
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem mi) {
-        switch (mi.getItemId()) {
-            case TASK:
-                break;
-            case EXIT:
-                finish();
-                break;
-        }
-        return true;
-    }
-     */
-
-    /*
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        Log.d("DDD", "dispatchKey=" + event.toString());
-        return super.dispatchKeyEvent(event);
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        Log.d("DDD", "onKeyDown=" + event.toString());
-        return super.onKeyDown(keyCode, event);
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        Log.d("DDD", "onTouchEvent=" + event.toString());
-        return super.onTouchEvent(event);
-    }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        Log.d("DDD", "dispatchTouchEvent=" + ev.toString());
-        return super.dispatchTouchEvent(ev);
-    }
-
-    @Override
-    public boolean dispatchGenericMotionEvent(MotionEvent ev) {
-        Log.d("DDD", "dispatchGenericMotionEvent=" + ev.toString());
-        return super.dispatchGenericMotionEvent(ev);
-    }
-
-    @Override
-    public boolean onGenericMotionEvent(MotionEvent event) {
-        Log.d("DDD", "onGenericMotionEvent=" + event.toString());
-        return super.onGenericMotionEvent(event);
-    }
-     */
 
 // ----- Private
 
@@ -478,7 +379,7 @@ public class MainActivity extends Activity {
     private void processKillDialog(DataItem dataItem) {
         final String processName = dataItem.name;
         new AlertDialog.Builder(MainActivity.this)
-                .setMessage("Kill Background\n" + processName)
+                .setMessage("Kill Process\n" + processName)
                 .setPositiveButton("Kill", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -631,29 +532,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    /*
-    private void StopProcess(String processname){
-        Process sh = null;
-        DataOutputStream os = null;
-        try{
-            sh = Runtime.getRuntime().exec("su");
-            os = new DataOutputStream(sh.getOutputStream());
-            final String Command = "am force-stop "+processname + "\n";
-            os.writeBytes(Command);
-            os.flush();
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-        try{
-            sh.waitFor();
-        }catch (InterruptedException e){
-            e.printStackTrace();
-        }
-    }
-    */
-
-
-
     // =============================================================================================
     // Custom List adapter to populate available Raster layers.
     @SuppressWarnings("SameParameterValue")
@@ -671,12 +549,12 @@ public class MainActivity extends Activity {
             View rowView = super.getView(position, convertView, parent);
             ProcInfo procInfo = getItem(position);
 
-            TextView textView = Ui.viewById(rowView, R.id.list_proc_text);
+            TextView textView = rowView.findViewById(R.id.list_proc_text);
             textView.setText(procInfo.toString());
 
             Drawable icon = appPackageManager.getPackageIcon(procInfo.pkgName);
             if (icon != null) {
-                Ui.<ImageView>viewById(rowView, R.id.list_proc_image).setImageDrawable(icon);
+                 rowView.<ImageView>findViewById(R.id.list_proc_image).setImageDrawable(icon);
             }
 
             rowView.setBackgroundColor((position & 1) == 1 ? Color.WHITE : 0xffddffdd);
@@ -702,13 +580,13 @@ public class MainActivity extends Activity {
             View rowView = super.getView(position, convertView, parent);
             PkgInfo pkgInfo = getItem(position);
 
-            TextView textView = Ui.viewById(rowView, R.id.list_pkg_text);
+            TextView textView = rowView.findViewById(R.id.list_pkg_text);
             textView.setText(pkgInfo.toString());
             textView.setBackgroundColor((position & 1) == 1 ? Color.WHITE : 0xffddffdd);
             textView.setBackgroundResource(R.drawable.list_color_state);
 
             Drawable icon = appPackageManager.getPackageIcon(pkgInfo.pkgName);
-            Ui.<ImageView>viewById(rowView, R.id.list_pkg_image) .setImageDrawable(icon);
+            rowView.<ImageView>findViewById(R.id.list_pkg_image) .setImageDrawable(icon);
             return rowView;
         }
     }

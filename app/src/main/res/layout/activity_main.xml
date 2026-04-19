@@ -58,7 +58,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/topBar"
-        android:background="#aaa"
+        android:background="@color/bg_control"
         android:orientation="horizontal">
 
         <ImageView
@@ -113,7 +113,7 @@
         android:layout_height="match_parent"
         android:layout_above="@+id/botBar"
         android:layout_below="@+id/filterBar"
-        android:background="@drawable/paper_dark"
+        android:background="?attr/listBackground"
         tools:listitem="@layout/list_row_pkg" />
 
     <LinearLayout

@@ -22,19 +22,24 @@
 
 <resources>
 
-    <color name="primary_dark">#000</color>
-    <color name="primary">#ff0000</color>
-    <color name="accent">#00ff00</color>
+    <color name="primary_dark">#eee</color>
+    <color name="primary">#FF0000</color>
+    <color name="accent">#00f</color>
 
-    <color name="pressed_color">#f0f</color>
-    <color name="focused_color">#484</color>
-    <color name="default_color">#333</color>
+    <color name="pressed_color">#FF00FF</color>
+    <color name="focused_color">#448844</color>
+    <color name="default_color">#333333</color>
 
-    <color name="btn_default">#888</color>
-    <color name="text_shadow">#111</color>
+    <color name="btn_default">#888888</color>
+    <color name="text_shadow">#111111</color>
+    <color name="bg_control">#eee</color>
+
+    <color name="window_background">#FFFFFF</color>
+    <color name="text_primary">#000000</color>
 
     <color name="list_select_color">#8050e050</color>
     <color name="list_pressed_color">#ff30c030</color>
+    <color name="list_text_color">#000</color>
 
     <color name="ripple_white_borderless_color">#40ffffff</color>
     <color name="ripple_white_borderless_color_mask">#c9ffffff</color>
