@@ -22,9 +22,6 @@
 package com.landenlabs.all_killbg;
 
 import static com.landenlabs.all_killbg.AppConstants.APP_TAG;
-import static com.landenlabs.all_killbg.AppConstants.PREF_THEME;
-import static com.landenlabs.all_killbg.SettingDialog.restoreAppTheme;
-import static com.landenlabs.all_killbg.SettingDialog.setAppTheme;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -33,12 +30,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.text.format.Formatter;
@@ -55,9 +50,10 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.ColorInt;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 
 import com.landenlabs.all_killbg.AppPackageManager.PkgInfo;
 import com.landenlabs.all_killbg.AppProcessManager.ProcInfo;
@@ -69,6 +65,8 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int INTENT_APP_DETAILS = 1;
+
+    private ActivityResultLauncher<Intent> accessibilitySettingsLauncher;
 
     // ---------------------------------------------------------------------------------------------
     private static int lastListIndex = 0;
@@ -106,6 +104,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
 
+        accessibilitySettingsLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> updateList()
+        );
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -121,9 +124,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         findViewById(R.id.show_pkg).setOnClickListener(this);
         findViewById(R.id.show_proc).setOnClickListener(this);
-        findViewById(R.id.kill_all).setOnClickListener(this);
-        findViewById(R.id.killService).setOnClickListener(this);
-        findViewById(R.id.killListMgr).setOnClickListener(this);
+        findViewById(R.id.stop_apps).setOnClickListener(this);
+        findViewById(R.id.stop_services).setOnClickListener(this);
+        findViewById(R.id.EditBlackList).setOnClickListener(this);
         findViewById(R.id.settings_icon).setOnClickListener(this);
 
         appPackageManager.loadPackageIcons(0);  // Should this be async
@@ -142,19 +145,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else  if (id == R.id.show_proc) {
             displayType = DisplayType.Processes;
             updateList();
-        } else if (id == R.id.kill_all) {
+        } else if (id == R.id.stop_apps) {
             if (isAccessibilityServiceEnabled()) {
-                KillAccessibilityService.setRunning(true);
-                appProcessManager.killAllBackgroundProcesses();
+                StopProcByAccessibilityService.setRunning(true);
+                appProcessManager.stopProcesses();
                 updateList();
             } else {
                 showAccessibilityDialog();
             }
-        } else if (id == R.id.killService) {
-            final Intent intentKillService = new Intent(MainActivity.this, KillService.class);
+        } else if (id == R.id.stop_services) {
+            final Intent intentKillService = new Intent(MainActivity.this, StopService.class);
             startService(intentKillService);
-        } else  if (id == R.id.killListMgr) {
-            final Intent intentKillList = new Intent(MainActivity.this, KillListActivity.class);
+        } else  if (id == R.id.EditBlackList) {
+            final Intent intentKillList = new Intent(MainActivity.this, BlackListActivity.class);
             startActivity(intentKillList);
         } else  if (id == R.id.settings_icon) {
             new SettingDialog().show(MainActivity.this);
@@ -165,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private boolean isAccessibilityServiceEnabled() {
-        String service = getPackageName() + "/" + KillAccessibilityService.class.getCanonicalName();
+        String service = getPackageName() + "/" + StopProcByAccessibilityService.class.getCanonicalName();
         try {
             int accessibilityEnabled = Settings.Secure.getInt(getContentResolver(), Settings.Secure.ACCESSIBILITY_ENABLED);
             if (accessibilityEnabled == 1) {
@@ -199,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
-                startActivityForResult(intent, 0);
+                accessibilitySettingsLauncher.launch(intent);
             }
         }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
@@ -220,7 +223,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d(APP_TAG, "onStart");
         updateList();
         restoreState();
     }
@@ -229,37 +231,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onStop() {
-        Log.d(APP_TAG, "onStop");
         saveState();
         super.onStop();
     }
 
     @Override
     public void onDestroy() {
-        Log.d(APP_TAG, "onDestroy called. Is finishing: " + isFinishing());
-        findViewById(R.id.show_pkg).setOnClickListener(null);
-        findViewById(R.id.show_proc).setOnClickListener(null);
-        findViewById(R.id.kill_all).setOnClickListener(null);
-        findViewById(R.id.killService).setOnClickListener(null);
-        findViewById(R.id.killListMgr).setOnClickListener(null);
-        findViewById(R.id.settings_icon).setOnClickListener(null);
+        // Log.d(APP_TAG, "onDestroy called. Is finishing: " + isFinishing());
+        // findViewById(R.id.show_pkg).setOnClickListener(null);
+        // findViewById(R.id.show_proc).setOnClickListener(null);
+        // findViewById(R.id.stop_apps).setOnClickListener(null);
+        // findViewById(R.id.stop_services).setOnClickListener(null);
+        // findViewById(R.id.EditBlackList).setOnClickListener(null);
+        // findViewById(R.id.settings_icon).setOnClickListener(null);
 
         super.onDestroy();
         saveKillList();
     }
 
+    /*
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        Log.d(APP_TAG, "onSaveInstanceState");
         super.onSaveInstanceState(outState);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle inState) {
-        Log.d(APP_TAG, "onRestoreInstanceState");
         super.onRestoreInstanceState(inState);
     }
-
+    */
 
 // ----- Private
 
@@ -412,7 +412,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void openAppDetailSettings(DataItem dataItem) {
         // Manual open from list - do NOT enable automation
-        KillAccessibilityService.setRunning(false);
+        StopProcByAccessibilityService.setRunning(false);
 
         Intent intent = new Intent("android.settings.APPLICATION_DETAILS_SETTINGS", Uri.fromParts("package", dataItem.pkgName, null));
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -562,5 +562,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return rowView;
         }
     }
-
 }

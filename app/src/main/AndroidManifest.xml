@@ -31,18 +31,18 @@
         </activity>
 
         <service
-            android:name=".KillService"
+            android:name=".StopService"
             android:enabled="true"
             android:exported="true" >
         </service>
 
         <activity
-            android:name=".KillListActivity"
-            android:label="@string/activity_kill_list" >
+            android:name=".BlackListActivity"
+            android:label="@string/black_stop_list" >
         </activity>
 
         <service
-            android:name=".KillAccessibilityService"
+            android:name=".StopProcByAccessibilityService"
             android:label="@string/app_name"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true">

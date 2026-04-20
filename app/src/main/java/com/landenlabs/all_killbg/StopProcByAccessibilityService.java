@@ -1,6 +1,9 @@
 package com.landenlabs.all_killbg;
 
+import static com.landenlabs.all_killbg.AppConstants.APP_TAG;
+
 import android.accessibilityservice.AccessibilityService;
+import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
@@ -10,9 +13,8 @@ import java.util.Locale;
 /**
  * Accessibility service to automate "Force Stop" in app settings.
  */
-public class KillAccessibilityService extends AccessibilityService {
+public class StopProcByAccessibilityService extends AccessibilityService {
 
-    private static final String TAG = "KillAccessibility";
     private static boolean sIsRunning = false;
 
     public static void setRunning(boolean running) {
@@ -21,6 +23,7 @@ public class KillAccessibilityService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
+        Log.d(APP_TAG, "StopProc Event " +  event);
         if (!sIsRunning) {
             return;
         }

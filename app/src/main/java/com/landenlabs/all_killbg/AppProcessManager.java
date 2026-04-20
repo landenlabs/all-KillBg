@@ -58,7 +58,7 @@ class AppProcessManager {
         activityManager = (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
     }
 
-    void killAllBackgroundProcesses() {
+    void stopProcesses() {
         for (ProcInfo procInfo : dataList) {
             String pkgName = procInfo.pkgName != null ? procInfo.pkgName : procInfo.name;
 

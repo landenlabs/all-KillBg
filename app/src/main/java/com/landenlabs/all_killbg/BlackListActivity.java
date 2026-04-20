@@ -42,7 +42,7 @@ import java.util.ArrayList;
  * Kill list - used by kill service.
  */
 @SuppressWarnings("Convert2Lambda")
-public class KillListActivity extends Activity {
+public class BlackListActivity extends Activity {
     private ArrayList<String> blackName;
     private ListView blackNameList;
     private ArrayAdapter<String> arrayAdapter;
@@ -52,7 +52,7 @@ public class KillListActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_kill_list);
+        setContentView(R.layout.activity_edit_list);
         blackName = new ArrayList<>();
         SharedPreferences preference = getSharedPreferences("main", Context.MODE_PRIVATE);
         blackName.clear();
@@ -66,12 +66,12 @@ public class KillListActivity extends Activity {
         blackNameList.setAdapter(arrayAdapter);
         blackNameList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> arg0, View arg1, final int position, long arg3) {
-                new AlertDialog.Builder(KillListActivity.this).setMessage("blackMsg1")
+                new AlertDialog.Builder(BlackListActivity.this).setMessage("blackMsg1")
                         .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 blackName.remove(position);
-                                Toast.makeText(KillListActivity.this, "toast11", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(BlackListActivity.this, "toast11", Toast.LENGTH_SHORT).show();
                                 saveArray();
                                 blackNameList.setAdapter(arrayAdapter);
                             }

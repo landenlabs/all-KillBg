@@ -107,6 +107,9 @@ public class SettingDialog {
         }
     }
 
+    /**
+     * Activity must by an extension of AppCompatActivity.
+     */
     public static void setAppTheme(int themeMode, @Nullable Activity activity) {
         Log.d(APP_TAG, "setAppTheme (auto=-1, 1=lite, 2=night) " + themeMode);
         AppCompatDelegate.setDefaultNightMode(themeMode);

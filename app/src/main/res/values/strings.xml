@@ -40,7 +40,7 @@
     </string-array>
 
     <string name="activity_proc_details">ProcDetails</string>
-    <string name="activity_kill_list">KillList</string>
+    <string name="black_stop_list">KillList</string>
     <string name="action_settings">Kill Menu</string>
 
 </resources>

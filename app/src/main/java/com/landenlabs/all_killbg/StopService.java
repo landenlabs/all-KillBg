@@ -38,7 +38,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
-public class KillService extends Service {
+public class StopService extends Service {
     private ArrayList<String> blackName;
     private ActivityManager myActivityManagerService;
 

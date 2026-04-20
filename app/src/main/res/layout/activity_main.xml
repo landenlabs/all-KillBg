@@ -125,7 +125,7 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/kill_all"
+            android:id="@+id/stop_apps"
             style="@style/Btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -133,19 +133,20 @@
             android:text="Stop All\nApps" />
 
         <Button
-            android:id="@+id/killService"
+            android:enabled="false"
+            android:id="@+id/stop_services"
             style="@style/Btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Kill\nService" />
+            android:text="Stop\nService" />
 
         <Button
-            android:id="@+id/killListMgr"
+            android:id="@+id/EditBlackList"
             style="@style/Btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Edit\nStop List" />
+            android:text="Edit\nSafe List" />
     </LinearLayout>
 </RelativeLayout>
