@@ -34,6 +34,8 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.text.format.Formatter;
@@ -215,9 +217,60 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
+        if (mIsAutomating) {
+            // The last app was processed (or at least we attempted it),
+            // increment the index and move to the next.
+            mCurrentProcessingIndex++;
 
+            // Add a slight delay (300-500ms) to allow the OS to stabilize
+            // after the 'Back' animation before jumping into the next Settings page.
+            new Handler(Looper.getMainLooper()).postDelayed(this::processNextApp, 500);
+        }
     }
 
+    /*
+    private int mCurrentProcessingIndex = 0;
+    private boolean mIsAutomating = false;
+
+    // Call this to start the whole process
+    void startKillAll() {
+        mCurrentProcessingIndex = 0;
+        mIsAutomating = true;
+        StopProcByAccessibilityService.setRunning(true);
+        processNextApp();
+    }
+
+    void processNextApp() {
+        if (!mIsAutomating || mCurrentProcessingIndex >= dataList.size()) {
+            mIsAutomating = false;
+            StopProcByAccessibilityService.setRunning(false);
+            Log.d(APP_TAG, "All processes handled.");
+            return;
+        }
+
+        ProcInfo procInfo = dataList.get(mCurrentProcessingIndex);
+        String pkgName = procInfo.pkgName != null ? procInfo.pkgName : procInfo.name;
+
+        // Skip our own app
+        if (pkgName.equals(context.getPackageName())) {
+            mCurrentProcessingIndex++;
+            processNextApp();
+            return;
+        }
+
+        Log.d(APP_TAG, "Processing: " + pkgName);
+
+        // 1. Optional: standard background kill
+        activityManager.killBackgroundProcesses(pkgName);
+
+        // 2. Open settings (This will trigger the Accessibility Service)
+        openAppDetailSettings(pkgName);
+
+        // We do NOT increment the index here yet.
+        // We increment it only when we successfully return.
+    }
+    */
+    
     // ---------------------------------------------------------------------------------------------
 
     @Override
