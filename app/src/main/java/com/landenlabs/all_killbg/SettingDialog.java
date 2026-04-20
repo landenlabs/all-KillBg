@@ -6,6 +6,7 @@ import static com.landenlabs.all_killbg.AppConstants.APP_TAG;
 import static com.landenlabs.all_killbg.AppConstants.PREF_THEME;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.ImageDecoder;
 import android.graphics.drawable.Animatable;
@@ -97,17 +98,19 @@ public class SettingDialog {
         dialog.show();
     }
 
-    public static void restoreAppTheme(@NonNull Activity activity) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+    public static void restoreAppTheme(@NonNull Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         int savedTheme = prefs.getInt(PREF_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        Log.d(APP_TAG, "restoreAppTheme (auto=-1, 1=lite, 2=night) " + savedTheme);
         if (savedTheme != AppCompatDelegate.getDefaultNightMode()) {
-            AppCompatDelegate.setDefaultNightMode(savedTheme);
+            setAppTheme(savedTheme, null);
         }
     }
 
     public static void setAppTheme(int themeMode, @Nullable Activity activity) {
         Log.d(APP_TAG, "setAppTheme (auto=-1, 1=lite, 2=night) " + themeMode);
         AppCompatDelegate.setDefaultNightMode(themeMode);
+
 
         // Recreate the activity to apply the theme immediately
         if (activity != null)

@@ -40,11 +40,11 @@
         android:layout_height="64dp" />
 
     <!--
-         android:background="@drawable/ripple_white_borderless"
-         -->
+        android:textColor="@color/list_text_color"
+        android:background="@drawable/ripple_white_borderless"
+    -->
     <TextView
         android:id="@+id/list_pkg_text"
-        android:textColor="?attr/listTextColor"
         android:layout_gravity="center"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

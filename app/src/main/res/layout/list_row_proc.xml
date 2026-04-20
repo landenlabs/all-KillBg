@@ -44,7 +44,6 @@
    -->
     <TextView
         android:id="@+id/list_proc_text"
-        android:textColor="?attr/listTextColor"
         android:layout_gravity="center"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

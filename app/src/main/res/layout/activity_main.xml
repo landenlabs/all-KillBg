@@ -113,7 +113,7 @@
         android:layout_height="match_parent"
         android:layout_above="@+id/botBar"
         android:layout_below="@+id/filterBar"
-        android:background="?attr/listBackground"
+        android:background="@drawable/bg_paper"
         tools:listitem="@layout/list_row_pkg" />
 
     <LinearLayout
