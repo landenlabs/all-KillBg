@@ -149,7 +149,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             updateList();
         } else if (id == R.id.stop_apps) {
             if (isAccessibilityServiceEnabled()) {
-                StopProcByAccessibilityService.setRunning(true);
                 appProcessManager.stopProcesses();
                 updateList();
             } else {
@@ -215,61 +214,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(APP_TAG, "onPause, jobRunning: " + appProcessManager.isJobRunning);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
-        if (mIsAutomating) {
-            // The last app was processed (or at least we attempted it),
-            // increment the index and move to the next.
-            mCurrentProcessingIndex++;
-
-            // Add a slight delay (300-500ms) to allow the OS to stabilize
-            // after the 'Back' animation before jumping into the next Settings page.
-            new Handler(Looper.getMainLooper()).postDelayed(this::processNextApp, 500);
-        }
+        Log.d(APP_TAG, "onResume, jobRunning: " + appProcessManager.isJobRunning);
+        if (appProcessManager.isJobRunning)
+            appProcessManager.stopContinue();
     }
-
-    /*
-    private int mCurrentProcessingIndex = 0;
-    private boolean mIsAutomating = false;
-
-    // Call this to start the whole process
-    void startKillAll() {
-        mCurrentProcessingIndex = 0;
-        mIsAutomating = true;
-        StopProcByAccessibilityService.setRunning(true);
-        processNextApp();
-    }
-
-    void processNextApp() {
-        if (!mIsAutomating || mCurrentProcessingIndex >= dataList.size()) {
-            mIsAutomating = false;
-            StopProcByAccessibilityService.setRunning(false);
-            Log.d(APP_TAG, "All processes handled.");
-            return;
-        }
-
-        ProcInfo procInfo = dataList.get(mCurrentProcessingIndex);
-        String pkgName = procInfo.pkgName != null ? procInfo.pkgName : procInfo.name;
-
-        // Skip our own app
-        if (pkgName.equals(context.getPackageName())) {
-            mCurrentProcessingIndex++;
-            processNextApp();
-            return;
-        }
-
-        Log.d(APP_TAG, "Processing: " + pkgName);
-
-        // 1. Optional: standard background kill
-        activityManager.killBackgroundProcesses(pkgName);
-
-        // 2. Open settings (This will trigger the Accessibility Service)
-        openAppDetailSettings(pkgName);
-
-        // We do NOT increment the index here yet.
-        // We increment it only when we successfully return.
-    }
-    */
     
     // ---------------------------------------------------------------------------------------------
 
@@ -284,13 +240,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onStop() {
+        Log.d(APP_TAG, "onStop");
         saveState();
         super.onStop();
     }
 
     @Override
     public void onDestroy() {
-        // Log.d(APP_TAG, "onDestroy called. Is finishing: " + isFinishing());
+        Log.d(APP_TAG, "onDestroy called. Is finishing: " + isFinishing());
         // findViewById(R.id.show_pkg).setOnClickListener(null);
         // findViewById(R.id.show_proc).setOnClickListener(null);
         // findViewById(R.id.stop_apps).setOnClickListener(null);
@@ -302,17 +259,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         saveKillList();
     }
 
-    /*
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        Log.d(APP_TAG, "onSaveInstanceState, jobRunning: " + appProcessManager.isJobRunning);
         super.onSaveInstanceState(outState);
+        appProcessManager.saveToBundle(outState);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle inState) {
+        Log.d(APP_TAG, "onRestoreInstanceState " + appProcessManager);
         super.onRestoreInstanceState(inState);
+        appProcessManager.loadFromBundle(inState);
     }
-    */
 
 // ----- Private
 
