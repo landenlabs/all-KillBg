@@ -39,10 +39,24 @@ public class StopProcByAccessibilityService extends AccessibilityService {
         Log.d(APP_TAG, "Accessibility Service Connected - View ID Reporting Enabled");
     }
 
+    private void doneWithEvent(AccessibilityEvent event, String msg) {
+        Log.i(APP_TAG, msg);
+        sIsRunning = false;
+        performGlobalAction(GLOBAL_ACTION_BACK);
+    }
+
+    private void sleep(long milli) {
+        try {
+            Thread.sleep(milli);
+        } catch (InterruptedException ignore) {
+        }
+    }
+
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        // Log.i(APP_TAG, "StopProc -  isRunning=" + sIsRunning);
-
+        Log.d(APP_TAG, "StopProc - " + sIsRunning
+                + " Event " + eventTypeToString(event.getEventType())
+                + " pkg=" + event.getPackageName());
         if (!sIsRunning || event == null) return;
 
         AccessibilityNodeInfo rootNode = getRootInActiveWindow();
@@ -55,23 +69,20 @@ public class StopProcByAccessibilityService extends AccessibilityService {
                 return; // Finally block will recycle rootNode
             }
 
-            Log.d(APP_TAG, "StopProc -  Event " + eventTypeToString(event.getEventType()));
 
-            // 2. Handle Confirmation Dialog
-            // Note: findAndClick should NOT recycle nodes internally to be safe here
+
+            // 2. Handle "Force stop" and Confirmation Dialog
             AccessibilityNodeInfo node = findClickable(rootNode, null, "Force stop");
-            if ( node != null && ! node.isEnabled()) {
-                Log.i(APP_TAG, "StopProc - not running");
-                performGlobalAction(GLOBAL_ACTION_BACK);
-                return;
+            if ( node != null ) {
+                if (node.isEnabled()) {
+                    Log.d(APP_TAG, "StopProc - Force stop clicked");
+                    node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                } else
+                    doneWithEvent(event,  "StopProc - not running");
+                return;  // if force stop clicked, wait for next event to re-enter this method.
             }
-            boolean clickedConfirmation = findAndClick(rootNode, "android:id/button1", "OK") ||
-                    findAndClick(rootNode, null, "Force stop");
-            //         findAndClick(rootNode, "android:id/button1", "Force stop");
-
-            if (clickedConfirmation) {
-                Log.i(APP_TAG, "StopProc - Confirmed kill.");
-                performGlobalAction(GLOBAL_ACTION_BACK);
+            if (findAndClick(rootNode, "android:id/button1", "OK")) {
+                doneWithEvent(event,"StopProc - Confirmed clicked.");
                 return;
             }
 
@@ -95,15 +106,12 @@ public class StopProcByAccessibilityService extends AccessibilityService {
                     stopButton.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                     Log.i(APP_TAG, "StopProc - Clicked Force Stop");
                 } else {
-                    Log.i(APP_TAG, "StopProc - Button disabled (App Stopped).");
-                    performGlobalAction(GLOBAL_ACTION_BACK);
-                    sIsRunning = false;
+                    doneWithEvent(event, "StopProc - Button disabled (App Stopped).");
                 }
                 // We don't need to manually recycle stopButton if we recycle rootNode
             } else {
                 // If we've been on this page for a while and find nothing, go back
-                Log.d(APP_TAG, "StopProc - No button found.");
-                performGlobalAction(GLOBAL_ACTION_BACK);
+                doneWithEvent(event,  "StopProc - No button found.");
             }
 
         } finally {
@@ -113,154 +121,12 @@ public class StopProcByAccessibilityService extends AccessibilityService {
         }
     }
 
-    /*
-    // @Override
-    public void onAccessibilityEvent2(AccessibilityEvent event) {
-        Log.i(APP_TAG, "StopProc -  isRunning=" + sIsRunning);
-        Log.d(APP_TAG, "StopProc -  Event " + eventTypeToString(event.getEventType()));
-
-        if (!sIsRunning || !Locale.getDefault().getLanguage().equals("en")) {
-            return;
-        }
-
-        AccessibilityNodeInfo nodeInfo = event.getSource();
-        if (nodeInfo == null) {
-            nodeInfo = getRootInActiveWindow();
-        }
-        if (nodeInfo == null) return;
-
-        AccessibilityNodeInfo rootNode = getRootInActiveWindow();
-        if (rootNode != null) {
-            Log.d(APP_TAG, "--- START NODE DUMP ---");
-            debugDumpNodes(rootNode, 0);
-            Log.d(APP_TAG, "--- END NODE DUMP ---");
-
-            // ... rest of your logic ...
-            rootNode.recycle();
-        }
-
-        // 1. Handle the Confirmation Dialog (The "OK" Button)
-        // We check this first because the dialog is a "top-most" window event.
-        boolean clickedOk = findAndClick(nodeInfo, "android:id/button1", "OK") ||
-                findAndClick(nodeInfo, "android:id/button1", "Force stop");
-
-        // Log.d(APP_TAG, "StopProc Event clickedOk: " + clickedOk + " " +  event.getPackageName());
-
-
-        // 2. Handle the App Info Page (The "Force stop" Button)
-        // If we didn't just click OK, look for the main button.
-        if (!clickedOk) {
-            // Find the "Force stop" button
-            List<AccessibilityNodeInfo> buttons = nodeInfo.findAccessibilityNodeInfosByViewId(
-                    "com.android.settings:id/force_stop_button");
-
-            if (buttons != null && !buttons.isEmpty()) {
-                AccessibilityNodeInfo stopButton = buttons.get(0);
-
-                if (stopButton.isEnabled()) {
-                    // Button is active -> App is running -> Click it
-                    stopButton.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                } else {
-                    // IMPORTANT: If the button is DISABLED, it means the app is already stopped.
-                    // This is our cue to exit this screen so the next app can be processed.
-                    Log.d(APP_TAG, "StopProc -  App is stopped (Button disabled). Going back.");
-                    performGlobalAction(GLOBAL_ACTION_BACK);
-
-                    // Optional: Short sleep or flag reset to prevent rapid-fire back actions
-                    // sIsRunning = false;
-                }
-            }
-        }
-
-        Log.d(APP_TAG, "StopProc -  Event done");
-        performGlobalAction(GLOBAL_ACTION_BACK);
-        sIsRunning = false;
-    }
-
-    // @Override
-    public void onAccessibilityEvent3(AccessibilityEvent event) {
-        Log.i(APP_TAG, "StopProc -  isRunning=" + sIsRunning);
-        // Log.d(APP_TAG, "StopProc -  Event " + eventTypeToString(event.getEventType()));
-        if (!sIsRunning) {
-            return;
-        }
-
-        // Only automate if English locale
-        if (!Locale.getDefault().getLanguage().equals("en")) {
-            Log.e(APP_TAG, "StopProc -  Not in English locale");
-            return;
-        }
-
-        // Prioritize the event source node
-        AccessibilityNodeInfo nodeInfo = event.getSource();
-        if (nodeInfo == null) {
-            Log.e(APP_TAG, "StopProc -  missing nodeInfo");
-            return;
-        }
-
-        AccessibilityNodeInfo rootNode = getRootInActiveWindow();
-        if (rootNode != null) {
-            Log.d(APP_TAG, "--- START NODE DUMP ---");
-            debugDumpNodes(rootNode, 0);
-            Log.d(APP_TAG, "--- END NODE DUMP ---");
-
-            // ... rest of your logic ...
-            rootNode.recycle();
-        }
-
-
-        // 1. Try to find and click "Force stop"
-        if (findAndClick(nodeInfo, "com.android.settings:id/force_stop_button", "Force stop")) {
-            // After clicking "Force stop", look for the "OK" button in the confirmation dialog.
-            // Dialog events might come in a separate event, but sometimes they are part of the same window
-            Log.i(APP_TAG, "StopProc -  force stop pressed " + nodeInfo.getPackageName());
-        }
-
-        // 2. Try to find and click "OK" or "Force stop" confirmation.
-        // Confirmation buttons often have ID "android:id/button1" or text "OK" / "Force stop"
-        if (findAndClick(nodeInfo, "android:id/button1", "OK") || 
-            findAndClick(nodeInfo, "android:id/button1", "Force stop")) {
-            Log.i(APP_TAG, "StopProc -  ok pressed " + nodeInfo.getPackageName());
-        }
-
-        sIsRunning = false; // Automation done for this app
-        performGlobalAction(GLOBAL_ACTION_BACK);
-        Log.d(APP_TAG, "StopProc -  done ");
-        // nodeInfo.recycle();
-
-        // Note: Do not recycle nodeInfo if it's the event source; the system handles that.
-        // But we should recycle it if it came from getRootInActiveWindow.
-        // For simplicity and safety in onAccessibilityEvent, we rely on system cleanup for the source.
-    }
-
-    private boolean findAndClick2(AccessibilityNodeInfo nodeInfo, String resId, String text) {
-        if (nodeInfo == null) return false;
-
-        List<AccessibilityNodeInfo> nodes = nodeInfo.findAccessibilityNodeInfosByViewId(resId);
-        if (nodes.isEmpty()) {
-            nodes = nodeInfo.findAccessibilityNodeInfosByText(text);
-        }
-
-        for (AccessibilityNodeInfo node : nodes) {
-            if (node.isEnabled() && node.isClickable()) {
-                node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                // Recycle all nodes in the list
-                for (AccessibilityNodeInfo n : nodes) n.recycle();
-                Log.d(APP_TAG, "StopProc clicked " + text);
-                return true;
-            }
-        }
-
-        for (AccessibilityNodeInfo n : nodes) n.recycle();
-        return false;
-    }
-    */
-
     private boolean findAndClick(AccessibilityNodeInfo nodeInfo, @Nullable String resId, @NonNull String text) {
         AccessibilityNodeInfo node = findClickable(nodeInfo, resId, text);
         if (node != null && node.isEnabled()) {
-            Log.i(APP_TAG, "StopProc - click " + text);
+            Log.i(APP_TAG, "StopProc - click '" + text + "'");
             node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+            return true;
         }
 
         return false;

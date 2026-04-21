@@ -98,6 +98,7 @@ class AppProcessManager {
             // 2. Trigger Accessibility Automation by opening App Info page
             if (!pkgName.equals(context.getPackageName())) {
                 isJobRunning = true;
+                StopProcByAccessibilityService.setRunning(true);
                 openAppDetailSettings(pkgName);
                 // Note: We break here because the Accessibility Service will handle the clicks
                 // and then return to this app. MainActivity.onResume will then be called
