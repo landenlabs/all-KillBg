@@ -216,13 +216,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onPause() {
         super.onPause();
-        Log.d(APP_TAG, "onPause, jobRunning: " + appProcessManager.isJobRunning);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(APP_TAG, "onResume, jobRunning: " + appProcessManager.isJobRunning);
         if (appProcessManager.isJobRunning)
             appProcessManager.stopContinue();
     }
@@ -240,35 +238,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onStop() {
-        Log.d(APP_TAG, "onStop");
         saveState();
         super.onStop();
     }
 
     @Override
     public void onDestroy() {
-        Log.d(APP_TAG, "onDestroy called. Is finishing: " + isFinishing());
-        // findViewById(R.id.show_pkg).setOnClickListener(null);
-        // findViewById(R.id.show_proc).setOnClickListener(null);
-        // findViewById(R.id.stop_apps).setOnClickListener(null);
-        // findViewById(R.id.stop_services).setOnClickListener(null);
-        // findViewById(R.id.EditBlackList).setOnClickListener(null);
-        // findViewById(R.id.settings_icon).setOnClickListener(null);
-
+        // Log.d(APP_TAG, "onDestroy called. Is finishing: " + isFinishing());
         super.onDestroy();
         saveKillList();
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        Log.d(APP_TAG, "onSaveInstanceState, jobRunning: " + appProcessManager.isJobRunning);
+        // Log.d(APP_TAG, "onSaveInstanceState, jobRunning: " + appProcessManager.isJobRunning);
         super.onSaveInstanceState(outState);
         appProcessManager.saveToBundle(outState);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle inState) {
-        Log.d(APP_TAG, "onRestoreInstanceState " + appProcessManager);
+        // Log.d(APP_TAG, "onRestoreInstanceState " + appProcessManager);
         super.onRestoreInstanceState(inState);
         appProcessManager.loadFromBundle(inState);
     }
