@@ -131,6 +131,7 @@ class AppProcessManager {
             long endTime = System.currentTimeMillis();
             long startTime = endTime - 1000 * 60 * 60 * 24; // Last 24 hours
 
+            /*
             List<UsageStats> usageStatsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_BEST, startTime, endTime);
 
             if (usageStatsList != null && !usageStatsList.isEmpty()) {
@@ -155,7 +156,7 @@ class AppProcessManager {
                     // Note: We can't get real PID/Size for other apps on modern Android without root
                     dataList.add(procInfo);
                 }
-            } else {
+            } else */ {
                 // Fallback: If no usage stats (maybe permission missing), show all installed apps
                 loadInstalledApps();
             }

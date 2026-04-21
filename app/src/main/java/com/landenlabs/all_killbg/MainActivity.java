@@ -189,7 +189,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             // Ignore
         }
 
-        Log.w(APP_TAG, "Accessibility service not enabled");
+        // Log.w(APP_TAG, "Accessibility service not enabled");
         return false;
     }
 
