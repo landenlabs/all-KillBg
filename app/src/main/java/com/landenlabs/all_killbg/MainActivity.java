@@ -143,6 +143,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         appPackageManager.loadPackageIcons(0);  // Should this be async
         loadKillList(this);
+        loadDisplaySettings();
         setupRecyclerView();
         updateBottomBarVisibility();
     }
@@ -153,9 +154,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if (id == R.id.show_pkg) {
             displayType = DisplayType.Packages;
+            saveDisplaySettings();
             updateList();
         } else if (id == R.id.show_proc) {
             displayType = DisplayType.Processes;
+            saveDisplaySettings();
             updateList();
         } else if (id == R.id.stop_apps) {
             if (isAccessibilityServiceEnabled()) {
@@ -175,6 +178,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (id == R.id.sort_by) {
             sortMode = sortMode.next();
             sortBtn.setImageResource(sortMode.iconRes);
+            saveDisplaySettings();
             updateList();
         }
     }
@@ -569,6 +573,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int size = preference.getInt("Status_size", 0);
         for (int i = 0; i < size; i++) {
             killList.add(preference.getString("Status_" + i, null));
+        }
+    }
+
+    private void saveDisplaySettings() {
+        SharedPreferences preferences = getSharedPreferences("main", Context.MODE_PRIVATE);
+        preferences.edit()
+                .putInt("DisplayType", displayType.ordinal())
+                .putInt("SortMode", sortMode.ordinal())
+                .apply();
+    }
+
+    private void loadDisplaySettings() {
+        SharedPreferences preferences = getSharedPreferences("main", Context.MODE_PRIVATE);
+        int displayOrdinal = preferences.getInt("DisplayType", DisplayType.Packages.ordinal());
+        int sortOrdinal = preferences.getInt("SortMode", SortMode.AppName.ordinal());
+
+        displayType = DisplayType.values()[displayOrdinal % DisplayType.values().length];
+        sortMode = SortMode.values()[sortOrdinal % SortMode.values().length];
+
+        if (showPkgBtn != null && showProcBtn != null) {
+            if (displayType == DisplayType.Packages) {
+                showPkgBtn.setChecked(true);
+            } else {
+                showProcBtn.setChecked(true);
+            }
+        }
+        if (sortBtn != null) {
+            sortBtn.setImageResource(sortMode.iconRes);
         }
     }
 }
