@@ -209,34 +209,17 @@ class AppProcessManager {
         @NonNull
         @SuppressWarnings("deprecation")
         static String getImportance(int importanceNum) {
-            String importance = "";
-            switch (importanceNum) {
-                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND:   // 100
-                    importance = "Foreground";
-                    break;
-                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING: // 150
-                    importance = "Top Sleep";
-                    break;
-                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE:      // 200
-                    importance = "Visible";
-                    break;
-                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE:  // 230
-                    importance = "Perceptible";
-                    break;
-                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE:      // 300
-                    importance = "Service";
-                    break;
-                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED:       // 400
-                    importance = "Cache";
-                    break;
-                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_EMPTY:        // 500
-                    importance = "Empty";
-                    break;
-                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE:         // 1000
-                    importance = "Gone";
-                    break;
-            }
-            return importance;
+            return switch (importanceNum) {
+                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND -> "Foreground";
+                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING -> "Top Sleep";
+                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE -> "Visible";
+                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE -> "Perceptible";
+                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE -> "Service";
+                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED -> "Cache";
+                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_EMPTY -> "Empty";
+                case ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE -> "Gone";
+                default -> "";
+            };
         }
 
         @NonNull

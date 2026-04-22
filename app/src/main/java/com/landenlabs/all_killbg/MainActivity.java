@@ -30,7 +30,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -42,12 +41,8 @@ import android.text.format.Formatter;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListAdapter;
-import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -56,6 +51,9 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.ColorInt;
 import androidx.appcompat.app.AppCompatActivity;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.landenlabs.all_killbg.AppPackageManager.PkgInfo;
 import com.landenlabs.all_killbg.AppProcessManager.ProcInfo;
@@ -74,7 +72,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static int lastListIndex = 0;
     private static int lastTopOff = 0;
     private static int focusID = 0;
-    private static int selectedPos = 0;
 
     private ActivityManager myActivityManager;
     private AppProcessManager appProcessManager;
@@ -85,8 +82,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private enum DisplayType {Packages, Processes}
 
     private DisplayType displayType = DisplayType.Packages;
-    private ListAdapter arrayAdapter;
-    private ListView dataList;
+    private RecyclerView.Adapter<?> arrayAdapter;
+    private RecyclerView dataList;
     private TextView rightStatusTv;
     private RadioButton showPkgBtn;
     private RadioButton showProcBtn;
@@ -133,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         appPackageManager.loadPackageIcons(0);  // Should this be async
         loadKillList(this);
-        setupListView();
+        setupRecyclerView();
         updateBottomBarVisibility();
     }
 
@@ -144,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (id == R.id.show_pkg) {
             displayType = DisplayType.Packages;
             updateList();
-        } else  if (id == R.id.show_proc) {
+        } else if (id == R.id.show_proc) {
             displayType = DisplayType.Processes;
             updateList();
         } else if (id == R.id.stop_apps) {
@@ -157,10 +154,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (id == R.id.stop_services) {
             final Intent intentKillService = new Intent(MainActivity.this, StopService.class);
             startService(intentKillService);
-        } else  if (id == R.id.EditBlackList) {
+        } else if (id == R.id.EditBlackList) {
             final Intent intentKillList = new Intent(MainActivity.this, BlackListActivity.class);
             startActivity(intentKillList);
-        } else  if (id == R.id.settings_icon) {
+        } else if (id == R.id.settings_icon) {
             new SettingDialog().show(MainActivity.this);
         }
     }
@@ -195,22 +192,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void showAccessibilityDialog() {
         new AlertDialog.Builder(this).setTitle("Permission Required")
-                .setMessage("To automate stopping apps, you must enable the Accessibility Service for 'all KillBg'.\n\n"
-                        + "1. Click 'Go to Settings'\n"
-                        + "2. Find 'all KillBg' in the list\n"
-                        + "3. Turn the switch ON")
-                .setPositiveButton("Go to Settings", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
-                accessibilitySettingsLauncher.launch(intent);
-            }
-        }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                updateBottomBarVisibility();
-            }
-        }).show();
+                .setMessage("""
+                        To automate stopping apps, you must enable the Accessibility Service for 'all KillBg'.
+                        
+                        1. Click 'Go to Settings'
+                        2. Find 'all KillBg' in the list
+                        3. Turn the switch ON""")
+                .setPositiveButton("Go to Settings", (dialog, which) -> {
+                    Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                    accessibilitySettingsLauncher.launch(intent);
+                }).setNegativeButton("Cancel", (dialog, which) -> updateBottomBarVisibility()).show();
     }
 
     @Override
@@ -268,66 +259,48 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // Save list state, position and focus
     private void saveState() {
         // Save list scroll state
-        lastListIndex = dataList.getFirstVisiblePosition();
-        View v = dataList.getChildAt(lastListIndex);
-        lastTopOff = (v == null) ? 0 : v.getTop();
+        LinearLayoutManager layoutManager = (LinearLayoutManager) dataList.getLayoutManager();
+        if (layoutManager != null) {
+            lastListIndex = layoutManager.findFirstVisibleItemPosition();
+            View v = layoutManager.findViewByPosition(lastListIndex);
+            lastTopOff = (v == null) ? 0 : v.getTop();
+        }
 
         // Save focus and list selected state.
         View focusedChild = getCurrentFocus();
         if (focusedChild != null) {
             focusID = focusedChild.getId();
-            selectedPos = 0;
-            if (focusedChild instanceof ListView) {
-                selectedPos = ((ListView) focusedChild).getSelectedItemPosition();
-            }
+            // RecyclerView doesn't have getSelectedItemPosition() like ListView
         }
     }
 
     // Restore list state, position and focus
     private void restoreState() {
-        dataList.smoothScrollToPositionFromTop(lastListIndex, lastTopOff);
-        // dataList.setSelectionFromTop(lastListIndex, lastTopOff);
+        LinearLayoutManager layoutManager = (LinearLayoutManager) dataList.getLayoutManager();
+        if (layoutManager != null) {
+            layoutManager.scrollToPositionWithOffset(lastListIndex, lastTopOff);
+        }
 
         View focusedChild = findViewById(focusID);
         if (focusedChild != null) {
             focusedChild.requestFocus();
-            if (focusedChild instanceof ListView) {
-                ((ListView) focusedChild).setSelection(selectedPos);
-            }
         }
     }
 
-    private void setupListView() {
+    private void setupRecyclerView() {
+        dataList.setLayoutManager(new LinearLayoutManager(this));
+    }
 
-        dataList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> adapterView, View arg1, int position, long arg3) {
-                final DataItem dataItem = (DataItem) adapterView.getItemAtPosition(position);
-                switch (displayType) {
-                    case Packages:
-                        openAppDetailSettings(dataItem);
-                        break;
-                    case Processes:
-                        processKillDialog(dataItem);
-                        break;
-                }
-            }
-        });
+    private void onListItemClick(DataItem dataItem) {
+        switch (displayType) {
+            case Packages -> openAppDetailSettings(dataItem);
+            case Processes -> processKillDialog(dataItem);
+        }
+    }
 
-        dataList.setOnItemLongClickListener(new ListView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> adapterView, final View view, int position, long arg3) {
-                DataItem dataItem = (DataItem) adapterView.getItemAtPosition(position);
-                switch (displayType) {
-                    case Packages:
-                        processExtraDialog(dataItem);
-                        break;
-                    case Processes:
-                        processExtraDialog(dataItem);
-                        break;
-                }
-                return true;
-            }
-        });
+    private boolean onListItemLongClick(DataItem dataItem) {
+        processExtraDialog(dataItem);
+        return true;
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -378,37 +351,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         dataList.setAdapter(null);
 
         switch (displayType) {
-            case Packages:
-                appPackageManager.loadList(new AppPackageManager.PkgAction() {
-                    @Override
-                    public void done(AppPackageManager mgr, int status, String msg) {
-                        if (status == STATUS_OK) {
-                            arrayAdapter = new PkgListAdapter(MainActivity.this, R.layout.list_row_pkg, R.id.list_pkg_text, mgr.getList());
-                            dataList.setAdapter(arrayAdapter);
-                            makeToast("Refresh Completed");
-                            upDateMemInfo();
-                        } else {
-                            makeToast("Failed to load packages " + msg);
-                        }
-                    }
-                });
-                break;
-
-            case Processes:
-                appProcessManager.loadList(new AppProcessManager.ProcAction() {
-                    @Override
-                    public void done(AppProcessManager mgr, int status, String msg) {
-                        if (status == STATUS_OK) {
-                            arrayAdapter = new ProcListAdapter(MainActivity.this, R.layout.list_row_proc, R.id.list_proc_text, mgr.getList());
-                            dataList.setAdapter(arrayAdapter);
-                            makeToast("Refresh Completed");
-                            upDateMemInfo();
-                        } else {
-                            makeToast("Failed to load process " + msg);
-                        }
-                    }
-                });
-                break;
+            case Packages -> appPackageManager.loadList((mgr, status, msg) -> {
+                if (status == AppPackageManager.PkgAction.STATUS_OK) {
+                    AppAdapter<PkgInfo> adapter = new AppAdapter<>(
+                            R.layout.list_row_pkg, R.id.list_pkg_text, R.id.list_pkg_image,
+                            (holder, item) -> {
+                                holder.textView.setText(item.toString());
+                                Drawable icon = appPackageManager.getPackageIcon(item.pkgName);
+                                holder.imageView.setImageDrawable(icon);
+                            });
+                    adapter.setItems(mgr.getList());
+                    adapter.setOnItemClickListener(this::onListItemClick);
+                    adapter.setOnItemLongClickListener(this::onListItemLongClick);
+                    arrayAdapter = adapter;
+                    dataList.setAdapter(arrayAdapter);
+                    makeToast("Refresh Completed");
+                    upDateMemInfo();
+                } else {
+                    makeToast("Failed to load packages " + msg);
+                }
+            });
+            case Processes -> appProcessManager.loadList((mgr, status, msg) -> {
+                if (status == AppProcessManager.ProcAction.STATUS_OK) {
+                    AppAdapter<ProcInfo> adapter = new AppAdapter<>(
+                            R.layout.list_row_proc, R.id.list_proc_text, R.id.list_proc_image,
+                            (holder, item) -> {
+                                holder.textView.setText(item.toString());
+                                Drawable icon = appPackageManager.getPackageIcon(item.pkgName);
+                                holder.imageView.setImageDrawable(icon);
+                            });
+                    adapter.setItems(mgr.getList());
+                    adapter.setOnItemClickListener(this::onListItemClick);
+                    adapter.setOnItemLongClickListener(this::onListItemLongClick);
+                    arrayAdapter = adapter;
+                    dataList.setAdapter(arrayAdapter);
+                    makeToast("Refresh Completed");
+                    upDateMemInfo();
+                } else {
+                    makeToast("Failed to load process " + msg);
+                }
+            });
         }
     }
 
@@ -437,7 +419,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         rightStatusTv.setText("Free Memory: " + freeMemSize);
 
         if (arrayAdapter != null) {
-            int count = arrayAdapter.getCount();
+            int count = arrayAdapter.getItemCount();
             if (displayType == DisplayType.Packages) {
                 showPkgBtn.setText("Show Apps\n(" + count + ")");
                 showProcBtn.setText("Show\nProcess");
@@ -471,8 +453,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Intent intentKillService = new Intent(this, ShowDetailActivity.class);
         intentKillService.putExtra("EXTRA_PROCESS_NAME", dataItem.name);
 
-        if (dataItem instanceof ProcInfo) {
-            ProcInfo procInfo = (ProcInfo) dataItem;
+        if (dataItem instanceof ProcInfo procInfo) {
             intentKillService.putExtra("EXTRA_PROCESS_PID", procInfo.pid + "");
             intentKillService.putExtra("EXTRA_PROCESS_IMPORTANCE", procInfo.importance + "");
         }
@@ -505,63 +486,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int size = preference.getInt("Status_size", 0);
         for (int i = 0; i < size; i++) {
             killList.add(preference.getString("Status_" + i, null));
-        }
-    }
-
-    // =============================================================================================
-    // Custom List adapter to populate available Raster layers.
-    @SuppressWarnings("SameParameterValue")
-    private class ProcListAdapter extends ArrayAdapter<ProcInfo> {
-        final int mTextViewResId;
-
-        ProcListAdapter(Context context, int resource, int textViewResId, List<ProcInfo> listLayers) {
-            super(context, resource, textViewResId, listLayers);
-            mTextViewResId = textViewResId;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View rowView = super.getView(position, convertView, parent);
-            ProcInfo procInfo = getItem(position);
-
-            TextView textView = rowView.findViewById(R.id.list_proc_text);
-            textView.setText(procInfo.toString());
-
-            Drawable icon = appPackageManager.getPackageIcon(procInfo.pkgName);
-            if (icon != null) {
-                rowView.<ImageView>findViewById(R.id.list_proc_image).setImageDrawable(icon);
-            }
-
-            rowView.setBackgroundColor((position & 1) == 1 ? Color.WHITE : 0xffddffdd);
-            rowView.setBackgroundResource(R.drawable.list_color_state);
-            return rowView;
-        }
-    }
-
-
-    // =============================================================================================
-    // Custom List adapter to show package list.
-    private class PkgListAdapter extends ArrayAdapter<PkgInfo> {
-        final int mTextViewResId;
-
-        PkgListAdapter(Context context, int resource, int textViewResId, List<PkgInfo> listLayers) {
-            super(context, resource, textViewResId, listLayers);
-            mTextViewResId = textViewResId;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View rowView = super.getView(position, convertView, parent);
-            PkgInfo pkgInfo = getItem(position);
-
-            TextView textView = rowView.findViewById(R.id.list_pkg_text);
-            textView.setText(pkgInfo.toString());
-            textView.setBackgroundColor((position & 1) == 1 ? Color.WHITE : 0xffddffdd);
-            textView.setBackgroundResource(R.drawable.list_color_state);
-
-            Drawable icon = appPackageManager.getPackageIcon(pkgInfo.pkgName);
-            rowView.<ImageView>findViewById(R.id.list_pkg_image).setImageDrawable(icon);
-            return rowView;
         }
     }
 }

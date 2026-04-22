@@ -12,7 +12,7 @@ import android.graphics.ImageDecoder;
 import android.graphics.drawable.Animatable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -48,19 +48,17 @@ public class SettingDialog {
             themeGroup.check(R.id.theme_auto);
         }
 
-        themeGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                int mode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
-                if (checkedId == R.id.theme_light)
-                    mode = AppCompatDelegate.MODE_NIGHT_NO;
-                else if (checkedId == R.id.theme_dark)
-                    mode = AppCompatDelegate.MODE_NIGHT_YES;
-
-                prefs.edit().putInt(PREF_THEME, mode).apply();
-                setAppTheme(mode, activity);
-                dialog.dismiss();
+        themeGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            int mode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+            if (checkedId == R.id.theme_light) {
+                mode = AppCompatDelegate.MODE_NIGHT_NO;
+            } else if (checkedId == R.id.theme_dark) {
+                mode = AppCompatDelegate.MODE_NIGHT_YES;
             }
+
+            prefs.edit().putInt(PREF_THEME, mode).apply();
+            setAppTheme(mode, activity);
+            dialog.dismiss();
         });
 
         // Set version and build info
@@ -88,12 +86,7 @@ public class SettingDialog {
             aboutImage.setImageResource(R.drawable.landen_labs_img);
         }
 
-        dialogView.findViewById(R.id.about_close_btn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
+        dialogView.findViewById(R.id.about_close_btn).setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
     }
