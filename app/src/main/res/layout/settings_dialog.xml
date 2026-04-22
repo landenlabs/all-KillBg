@@ -122,6 +122,47 @@
                 android:text="Dark" />
         </RadioGroup>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="16dp"
+            android:background="#33000000" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Accessibility Automation"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="To automate stopping apps, you must enable the Accessibility Service for 'all KillBg'."
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/settings_accessibility_link"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="Open Accessibility Settings"
+            android:textColor="?android:attr/colorAccent"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="16dp"
+            android:background="#33000000" />
+
         <Button
             android:id="@+id/about_close_btn"
             style="?android:attr/borderlessButtonStyle"

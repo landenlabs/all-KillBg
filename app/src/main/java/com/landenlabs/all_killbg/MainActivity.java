@@ -62,9 +62,8 @@ import java.util.Collections;
 @SuppressWarnings("Convert2Lambda")
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private static final int INTENT_APP_DETAILS = 1;
-
     private ActivityResultLauncher<Intent> accessibilitySettingsLauncher;
+    private ActivityResultLauncher<Intent> appDetailsLauncher;
 
     // ---------------------------------------------------------------------------------------------
     private static int lastListIndex = 0;
@@ -86,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RadioButton showPkgBtn;
     private RadioButton showProcBtn;
     private ImageView sortBtn;
+    private ImageView settingsBtn;
     private View stopAppsBadge;
 
     private SortMode sortMode = SortMode.AppName;
@@ -110,6 +110,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 result -> updateList()
         );
 
+        appDetailsLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> updateList()
+        );
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -119,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         showPkgBtn = findViewById(R.id.show_pkg);
         showProcBtn = findViewById(R.id.show_proc);
         sortBtn = findViewById(R.id.sort_by);
+        settingsBtn = findViewById(R.id.settings_icon);
         stopAppsBadge = findViewById(R.id.stop_apps_badge);
 
         myActivityManager = (ActivityManager) getSystemService(Activity.ACTIVITY_SERVICE);
@@ -174,8 +180,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void updateBottomBarVisibility() {
+        boolean isEnabled = isAccessibilityServiceEnabled();
         if (stopAppsBadge != null) {
-            stopAppsBadge.setVisibility(isAccessibilityServiceEnabled() ? View.GONE : View.VISIBLE);
+            stopAppsBadge.setVisibility(isEnabled ? View.GONE : View.VISIBLE);
+        }
+        if (settingsBtn != null) {
+            if (isEnabled) {
+                settingsBtn.clearColorFilter();
+            } else {
+                settingsBtn.setColorFilter(0xFFFF0000);
+            }
         }
     }
 
@@ -475,16 +489,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Intent intent = new Intent("android.settings.APPLICATION_DETAILS_SETTINGS", Uri.fromParts("package", dataItem.pkgName, null));
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivityForResult(intent, INTENT_APP_DETAILS);
+        appDetailsLauncher.launch(intent);
         makeToast(dataItem.pkgName);
     }
 
-    /*
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // updateList();
-    }
-     */
 
     private void upDateMemInfo() {
         ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();

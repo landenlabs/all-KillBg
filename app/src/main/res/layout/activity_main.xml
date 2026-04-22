@@ -74,6 +74,9 @@
             android:layout_weight="1"
             android:orientation="horizontal">
 
+            <!--
+               android:button="@drawable/radio_btn_selector"
+            -->
             <RadioButton
                 android:id="@+id/show_pkg"
                 style="@style/Btn"
@@ -82,17 +85,20 @@
                 android:layout_weight="1"
                 android:checked="true"
                 android:textColor="@drawable/btn_color_state"
-                android:button="@drawable/radio_btn_selector"
+                android:button="@null"
                 android:focusable="true"
                 android:text="Show\nApps" />
 
+            <!--
+                android:button="@drawable/radio_btn_selector"
+            -->
             <RadioButton
                 android:id="@+id/show_proc"
                 style="@style/Btn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:textColor="@drawable/btn_color_state"
-                android:button="@drawable/radio_btn_selector"
+                android:button="@null"
                 android:layout_weight="1"
                 android:text="Show\nProcess" />
 

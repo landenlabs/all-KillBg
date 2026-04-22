@@ -6,6 +6,7 @@ import static com.landenlabs.all_killbg.AppConstants.PREF_THEME;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.ImageDecoder;
 import android.graphics.drawable.Animatable;
@@ -84,6 +85,11 @@ public class SettingDialog {
         } else {
             aboutImage.setImageResource(R.drawable.landen_labs_img);
         }
+
+        dialogView.findViewById(R.id.settings_accessibility_link).setOnClickListener(v -> {
+            Intent intent = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
+            activity.startActivity(intent);
+        });
 
         dialogView.findViewById(R.id.about_close_btn).setOnClickListener(v -> dialog.dismiss());
 
