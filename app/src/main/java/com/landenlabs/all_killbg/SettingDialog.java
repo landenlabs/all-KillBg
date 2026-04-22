@@ -1,7 +1,6 @@
 package com.landenlabs.all_killbg;
 
 import static androidx.core.app.ActivityCompat.recreate;
-
 import static com.landenlabs.all_killbg.AppConstants.APP_TAG;
 import static com.landenlabs.all_killbg.AppConstants.PREF_THEME;
 
@@ -12,7 +11,6 @@ import android.graphics.ImageDecoder;
 import android.graphics.drawable.Animatable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -23,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.preference.PreferenceManager;
 
 public class SettingDialog {
 

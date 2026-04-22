@@ -89,6 +89,7 @@ class AppPackageManager {
             if (!isStopped(appInfo) && !isSystem(appInfo) && !isDup) {
                 PkgInfo pkgInfo = new PkgInfo();
                 pkgInfo.label = packageManager.getApplicationLabel(appInfo).toString();
+                pkgInfo.name = pkgInfo.label;
                 pkgInfo.pkgName = appInfo.packageName;
                 pkgInfo.processName = appInfo.processName;
 
@@ -117,6 +118,7 @@ class AppPackageManager {
                 if (!isStopped(appInfo) && !isSystem(appInfo) && !isDup) {
                     PkgInfo pkgInfo = new PkgInfo();
                     pkgInfo.label = packageManager.getApplicationLabel(appInfo).toString();
+                    pkgInfo.name = pkgInfo.label;
                     pkgInfo.pkgName = appInfo.packageName;
                     pkgInfo.processName = appInfo.processName;
 

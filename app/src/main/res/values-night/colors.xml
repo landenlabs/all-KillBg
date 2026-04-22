@@ -16,5 +16,6 @@
     <color name="text_primary">#FFFFFF</color>
 
     <color name="list_text_color">#DDDDDD</color>
+    <color name="sort_highlight">#FFFF00</color>
 
 </resources>

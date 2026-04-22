@@ -1,6 +1,5 @@
 package com.landenlabs.all_killbg;
 
-import static android.view.accessibility.AccessibilityEvent.eventTypeToString;
 import static com.landenlabs.all_killbg.AppConstants.APP_TAG;
 
 import android.accessibilityservice.AccessibilityService;
@@ -8,13 +7,11 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Accessibility service to automate "Force Stop" in app settings.

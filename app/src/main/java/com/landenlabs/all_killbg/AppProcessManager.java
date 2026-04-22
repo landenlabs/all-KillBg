@@ -22,12 +22,10 @@
 package com.landenlabs.all_killbg;
 
 import static android.content.Context.ACTIVITY_SERVICE;
-
 import static com.landenlabs.all_killbg.AppConstants.APP_TAG;
 
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
@@ -43,7 +41,6 @@ import androidx.annotation.Nullable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
 
 /**
  */

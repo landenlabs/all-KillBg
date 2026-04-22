@@ -43,4 +43,5 @@
 
     <color name="ripple_white_borderless_color">#40ffffff</color>
     <color name="ripple_white_borderless_color_mask">#c9ffffff</color>
+    <color name="sort_highlight">#FFFF00</color>
 </resources>

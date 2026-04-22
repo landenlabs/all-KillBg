@@ -33,14 +33,13 @@ import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.provider.Settings;
+import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.format.Formatter;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
@@ -51,7 +50,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.ColorInt;
 import androidx.appcompat.app.AppCompatActivity;
-
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -59,7 +57,7 @@ import com.landenlabs.all_killbg.AppPackageManager.PkgInfo;
 import com.landenlabs.all_killbg.AppProcessManager.ProcInfo;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 
 @SuppressWarnings("Convert2Lambda")
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -87,6 +85,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView rightStatusTv;
     private RadioButton showPkgBtn;
     private RadioButton showProcBtn;
+    private ImageView sortBtn;
+    private View stopAppsBadge;
+
+    private SortMode sortMode = SortMode.AppName;
 
 
     // =============================================================================================
@@ -116,6 +118,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         showPkgBtn = findViewById(R.id.show_pkg);
         showProcBtn = findViewById(R.id.show_proc);
+        sortBtn = findViewById(R.id.sort_by);
+        stopAppsBadge = findViewById(R.id.stop_apps_badge);
 
         myActivityManager = (ActivityManager) getSystemService(Activity.ACTIVITY_SERVICE);
         appPackageManager = new AppPackageManager(this);
@@ -127,6 +131,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.stop_services).setOnClickListener(this);
         findViewById(R.id.EditBlackList).setOnClickListener(this);
         findViewById(R.id.settings_icon).setOnClickListener(this);
+        sortBtn.setOnClickListener(this);
+
+        sortBtn.setImageResource(sortMode.iconRes);
 
         appPackageManager.loadPackageIcons(0);  // Should this be async
         loadKillList(this);
@@ -159,10 +166,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             startActivity(intentKillList);
         } else if (id == R.id.settings_icon) {
             new SettingDialog().show(MainActivity.this);
+        } else if (id == R.id.sort_by) {
+            sortMode = sortMode.next();
+            sortBtn.setImageResource(sortMode.iconRes);
+            updateList();
         }
     }
 
     private void updateBottomBarVisibility() {
+        if (stopAppsBadge != null) {
+            stopAppsBadge.setVisibility(isAccessibilityServiceEnabled() ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateBottomBarVisibility();
+        if (appProcessManager.isJobRunning) {
+            appProcessManager.stopContinue();
+        }
     }
 
     private boolean isAccessibilityServiceEnabled() {
@@ -209,13 +232,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onPause();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (appProcessManager.isJobRunning)
-            appProcessManager.stopContinue();
-    }
-    
     // ---------------------------------------------------------------------------------------------
 
     @Override
@@ -232,8 +248,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         saveState();
         super.onStop();
     }
-
-    @Override
     public void onDestroy() {
         // Log.d(APP_TAG, "onDestroy called. Is finishing: " + isFinishing());
         super.onDestroy();
@@ -347,20 +361,66 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }).create().show();
     }
 
+    private String str(String s) {
+        return s == null ? "" : s;
+    }
+
+    private void highlightText(TextView textView, String fullText, String subText) {
+        if (subText == null || subText.isEmpty()) {
+            textView.setText(fullText);
+            return;
+        }
+        SpannableString spannable = new SpannableString(fullText);
+        int start = fullText.indexOf(subText);
+        if (start != -1) {
+            int highlightColor = getResources().getColor(R.color.sort_highlight);
+            spannable.setSpan(new ForegroundColorSpan(highlightColor), start, start + subText.length(), 0);
+        }
+        textView.setText(spannable);
+    }
+
     private void updateList() {
         dataList.setAdapter(null);
 
         switch (displayType) {
             case Packages -> appPackageManager.loadList((mgr, status, msg) -> {
                 if (status == AppPackageManager.PkgAction.STATUS_OK) {
+                    ArrayList<PkgInfo> list = new ArrayList<>(mgr.getList());
+                    Collections.sort(list, (PkgInfo a, PkgInfo b) -> switch (sortMode) {
+                        case AppName -> str(a.name).compareToIgnoreCase(str(b.name));
+                        case Date -> {
+                            long timeA = (a.packInfo != null) ? a.packInfo.lastUpdateTime : 0;
+                            long timeB = (b.packInfo != null) ? b.packInfo.lastUpdateTime : 0;
+                            yield Long.compare(timeB, timeA); // Descending (newest first)
+                        }
+                        case Id -> {
+                            String idA = (a.packInfo != null) ? a.packInfo.packageName : "";
+                            String idB = (b.packInfo != null) ? b.packInfo.packageName : "";
+                            yield idA.compareToIgnoreCase(idB);
+                        }
+                    });
+
                     AppAdapter<PkgInfo> adapter = new AppAdapter<>(
                             R.layout.list_row_pkg, R.id.list_pkg_text, R.id.list_pkg_image,
-                            (holder, item) -> {
-                                holder.textView.setText(item.toString());
+                            (holder, item, mode) -> {
+                                String fullText = item.toString();
+                                String highlight = switch (mode) {
+                                    case AppName -> item.label;
+                                    case Date -> {
+                                        java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("MM/dd/yyyy  HH:mm");
+                                        yield (item.packInfo != null && item.packInfo.firstInstallTime != item.packInfo.lastUpdateTime)
+                                                ? "Install Last " + fmt.format(item.packInfo.lastUpdateTime)
+                                                : "Installed " + (item.packInfo != null ? fmt.format(item.packInfo.firstInstallTime) : "");
+                                    }
+                                    case Id -> (item.packInfo != null) ? item.packInfo.packageName : null;
+                                };
+                                highlightText(holder.textView, fullText, highlight);
+
                                 Drawable icon = appPackageManager.getPackageIcon(item.pkgName);
                                 holder.imageView.setImageDrawable(icon);
                             });
-                    adapter.setItems(mgr.getList());
+                    adapter.setSortMode(sortMode);
+                    adapter.setItems(list);
                     adapter.setOnItemClickListener(this::onListItemClick);
                     adapter.setOnItemLongClickListener(this::onListItemLongClick);
                     arrayAdapter = adapter;
@@ -373,14 +433,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             });
             case Processes -> appProcessManager.loadList((mgr, status, msg) -> {
                 if (status == AppProcessManager.ProcAction.STATUS_OK) {
+                    ArrayList<ProcInfo> list = new ArrayList<>(mgr.getList());
+                    Collections.sort(list, (ProcInfo a, ProcInfo b) -> switch (sortMode) {
+                        case AppName -> str(a.name).compareToIgnoreCase(str(b.name));
+                        case Date -> Long.compare(b.startTime, a.startTime); // Descending
+                        case Id -> str(a.state).compareToIgnoreCase(str(b.state));
+                    });
+
                     AppAdapter<ProcInfo> adapter = new AppAdapter<>(
                             R.layout.list_row_proc, R.id.list_proc_text, R.id.list_proc_image,
-                            (holder, item) -> {
-                                holder.textView.setText(item.toString());
+                            (holder, item, mode) -> {
+                                String fullText = item.toString();
+                                String highlight = switch (mode) {
+                                    case AppName -> item.name;
+                                    case Date -> "StartTm: " + new java.text.SimpleDateFormat("EEE  hh:mm a z").format(item.startTime);
+                                    case Id -> item.state;
+                                };
+                                highlightText(holder.textView, fullText, highlight);
+
                                 Drawable icon = appPackageManager.getPackageIcon(item.pkgName);
                                 holder.imageView.setImageDrawable(icon);
                             });
-                    adapter.setItems(mgr.getList());
+                    adapter.setSortMode(sortMode);
+                    adapter.setItems(list);
                     adapter.setOnItemClickListener(this::onListItemClick);
                     adapter.setOnItemLongClickListener(this::onListItemLongClick);
                     arrayAdapter = adapter;

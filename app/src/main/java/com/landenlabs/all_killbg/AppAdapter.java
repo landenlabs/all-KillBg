@@ -24,7 +24,7 @@ public class AppAdapter<T extends DataItem> extends RecyclerView.Adapter<AppAdap
     }
 
     public interface Binder<T> {
-        void bind(ViewHolder holder, T item);
+        void bind(ViewHolder holder, T item, SortMode sortMode);
     }
 
     private final List<T> items = new ArrayList<>();
@@ -34,6 +34,7 @@ public class AppAdapter<T extends DataItem> extends RecyclerView.Adapter<AppAdap
     private final Binder<T> binder;
     private OnItemClickListener<T> clickListener;
     private OnItemLongClickListener<T> longClickListener;
+    private SortMode sortMode = SortMode.AppName;
 
     public AppAdapter(int layoutResId, int textResId, int imageResId, Binder<T> binder) {
         this.layoutResId = layoutResId;
@@ -48,6 +49,10 @@ public class AppAdapter<T extends DataItem> extends RecyclerView.Adapter<AppAdap
             items.addAll(newItems);
         }
         notifyDataSetChanged();
+    }
+
+    public void setSortMode(SortMode sortMode) {
+        this.sortMode = sortMode;
     }
 
     public void setOnItemClickListener(OnItemClickListener<T> listener) {
@@ -68,7 +73,7 @@ public class AppAdapter<T extends DataItem> extends RecyclerView.Adapter<AppAdap
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         T item = items.get(position);
-        binder.bind(holder, item);
+        binder.bind(holder, item, sortMode);
 
         holder.itemView.setOnClickListener(v -> {
             if (clickListener != null) {

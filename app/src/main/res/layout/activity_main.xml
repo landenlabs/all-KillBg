@@ -125,13 +125,29 @@
         android:background="#aaa"
         android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/stop_apps"
-            style="@style/Btn"
+        <FrameLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Stop All\nApps" />
+            android:layout_weight="1">
+
+            <Button
+                android:id="@+id/stop_apps"
+                style="@style/Btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Stop All\nApps" />
+
+            <View
+                android:elevation="10dp"
+                android:id="@+id/stop_apps_badge"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/badge_dot"
+                android:visibility="gone" />
+        </FrameLayout>
 
         <Button
             android:enabled="false"
