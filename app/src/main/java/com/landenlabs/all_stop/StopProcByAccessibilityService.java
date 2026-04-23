@@ -1,6 +1,27 @@
-package com.landenlabs.all_killbg;
+/*
+ * Copyright (c) 2026 Dennis Lang (LanDen Labs)
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ * associated documentation files (the "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
+ * following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+ * LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+ * NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * @author Dennis Lang
+ * @see https://LanDenLabs.com/
+ */
 
-import static com.landenlabs.all_killbg.AppConstants.APP_TAG;
+package com.landenlabs.all_stop;
+
+import static com.landenlabs.all_stop.AppConstants.APP_TAG;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
@@ -35,7 +56,7 @@ public class StopProcByAccessibilityService extends AccessibilityService {
         Log.d(APP_TAG, "Accessibility Service Connected - View ID Reporting Enabled");
     }
 
-    private void doneWithEvent(AccessibilityEvent event, String msg) {
+    private void doneWithEvent(@NonNull AccessibilityEvent event, @NonNull String msg) {
         // Log.i(APP_TAG, msg + " [Back Action]");
         sIsRunning = false;
         performGlobalAction(GLOBAL_ACTION_BACK);
@@ -48,9 +69,9 @@ public class StopProcByAccessibilityService extends AccessibilityService {
     }
 
     @Override
-    public void onAccessibilityEvent(AccessibilityEvent event) {
+    public void onAccessibilityEvent(@NonNull AccessibilityEvent event) {
         // Log.d(APP_TAG, "StopProc - " + sIsRunning  + " Event " + eventTypeToString(event.getEventType()) + " pkg=" + event.getPackageName());
-        if (!sIsRunning || event == null)
+        if (!sIsRunning)
             return;
 
         AccessibilityNodeInfo rootNode = getRootInActiveWindow();
@@ -67,40 +88,33 @@ public class StopProcByAccessibilityService extends AccessibilityService {
         if (currentFingerprint.equals(prevEventFingerprint)) {
             // It's a duplicate or a "chattering" event - discard it
             // Log.d(APP_TAG, "StopProc - ignore dup event");
-            rootNode.recycle();
             return;
         }
 
         // Update the cache and perform action
         prevEventFingerprint = currentFingerprint;
 
-        try {
-            // 1. Verify we are in Settings
-            CharSequence packageName = rootNode.getPackageName();
-            if (packageName == null || !packageName.toString().contains("settings")) {
-                return; // Finally block will recycle rootNode
-            }
+        // 1. Verify we are in Settings
+        CharSequence packageName = rootNode.getPackageName();
+        if (packageName == null || !packageName.toString().contains("settings")) {
+            return;
+        }
 
-            // 2. Handle "Force stop" and Confirmation Dialog
-            AccessibilityNodeInfo node = findClickable(rootNode, null, "Force stop");
-            if ( node != null ) {
-                if (node.isEnabled()) {
-                    // Log.w(APP_TAG, "StopProc - Force stop clicked");
-                    node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                    sleep(1000);    // Wait for click to popup confirmation, else will get double click.
-                } else
-                    doneWithEvent(event,  "StopProc - not running");
-                return;  // if force stop clicked, wait for next event to re-enter this method.
-            }
-            if (findAndClick(rootNode, "android:id/button1", "OK")) {
-                stopCnt++;
-                sleep(1000);
-                doneWithEvent(event,"StopProc - stopped, cnt=" + stopCnt);
-            }
-        } finally {
-            // The ONLY place you need to recycle.
-            // This clears the root and all children fetched from it.
-            rootNode.recycle();
+        // 2. Handle "Force stop" and Confirmation Dialog
+        AccessibilityNodeInfo node = findClickable(rootNode, null, "Force stop");
+        if ( node != null ) {
+            if (node.isEnabled()) {
+                // Log.w(APP_TAG, "StopProc - Force stop clicked");
+                node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                sleep(1000);    // Wait for click to popup confirmation, else will get double click.
+            } else
+                doneWithEvent(event,  "StopProc - not running");
+            return;  // if force stop clicked, wait for next event to re-enter this method.
+        }
+        if (findAndClick(rootNode, "android:id/button1", "OK")) {
+            stopCnt++;
+            sleep(1000);
+            doneWithEvent(event,"StopProc - stopped, cnt=" + stopCnt);
         }
     }
 
@@ -115,12 +129,12 @@ public class StopProcByAccessibilityService extends AccessibilityService {
         return false;
     }
 
-    private AccessibilityNodeInfo findClickable(AccessibilityNodeInfo nodeInfo, @Nullable String resId, @NonNull String text) {
+    @Nullable
+    private AccessibilityNodeInfo findClickable(@Nullable AccessibilityNodeInfo nodeInfo, @Nullable String resId, @NonNull String text) {
         if (nodeInfo == null)
             return null;
 
-        List<AccessibilityNodeInfo> list;
-        list = nodeInfo.findAccessibilityNodeInfosByText(text);
+        List<AccessibilityNodeInfo> list = nodeInfo.findAccessibilityNodeInfosByText(text);
         for (AccessibilityNodeInfo node : list) {
             if (node.isClickable() ) {
                 Log.i(APP_TAG, "StopProc - found '" + text + "'");
@@ -130,8 +144,8 @@ public class StopProcByAccessibilityService extends AccessibilityService {
 
         // Try by ID last
         if (resId != null) {
-            list = nodeInfo.findAccessibilityNodeInfosByViewId(resId);
-            for (AccessibilityNodeInfo node : list) {
+            List<AccessibilityNodeInfo> idList = nodeInfo.findAccessibilityNodeInfosByViewId(resId);
+            for (AccessibilityNodeInfo node : idList) {
                 if (node.isClickable() ) {
                     Log.i(APP_TAG, "StopProc - found " + resId);
                     return node;

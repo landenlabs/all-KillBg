@@ -76,7 +76,7 @@
             android:autoLink="web"
             android:gravity="center"
             android:linksClickable="true"
-            android:text="https://github.com/landenlabs/all-KillBg"
+            android:text="https://github.com/landenlabs/all-stop"
             android:textColor="?android:attr/colorAccent"
             android:textSize="14sp" />
 
@@ -141,7 +141,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
-            android:text="To automate stopping apps, you must enable the Accessibility Service for 'all KillBg'."
+            android:text="To automate stopping apps, you must enable the Accessibility Service for 'all-Stop'."
             android:textSize="14sp" />
 
         <TextView

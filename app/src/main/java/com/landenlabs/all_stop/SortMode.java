@@ -19,12 +19,20 @@
  * @see https://LanDenLabs.com/
  */
 
-package com.landenlabs.all_killbg;
+package com.landenlabs.all_stop;
 
-/**
- */
-class DataItem {
+public enum SortMode {
+    AppName(android.R.drawable.ic_menu_sort_alphabetically),
+    Date(android.R.drawable.ic_menu_today),
+    Id(android.R.drawable.ic_menu_edit);
 
-    public String name;
-    public String pkgName;
+    public final int iconRes;
+
+    SortMode(int iconRes) {
+        this.iconRes = iconRes;
+    }
+
+    public SortMode next() {
+        return values()[(ordinal() + 1) % values().length];
+    }
 }

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.landenlabs.all_killbg">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!--
     <uses-permission android:name="android.permission.GET_TASKS" />
@@ -10,15 +9,18 @@
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
 
+    <!-- firebase -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
-        android:name=".MainApp"
-        android:icon="@drawable/killbg"
+        android:name="com.landenlabs.all_stop.MainApp"
+        android:icon="@drawable/app_stop"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
 
         <activity
             android:exported="true"
-            android:name=".MainActivity">
+            android:name="com.landenlabs.all_stop.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -26,23 +28,23 @@
         </activity>
 
         <activity
-            android:name=".ShowDetailActivity"
+            android:name="com.landenlabs.all_stop.ShowDetailActivity"
             android:label="@string/activity_proc_details" >
         </activity>
 
         <service
-            android:name=".StopService"
+            android:name="com.landenlabs.all_stop.StopService"
             android:enabled="true"
             android:exported="true" >
         </service>
 
         <activity
-            android:name=".BlackListActivity"
+            android:name="com.landenlabs.all_stop.BlackListActivity"
             android:label="@string/black_stop_list" >
         </activity>
 
         <service
-            android:name=".StopProcByAccessibilityService"
+            android:name="com.landenlabs.all_stop.StopProcByAccessibilityService"
             android:label="@string/app_name"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true">

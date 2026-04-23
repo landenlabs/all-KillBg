@@ -19,12 +19,20 @@
  * @see https://LanDenLabs.com/
  */
 
-package com.landenlabs.all_killbg;
+package com.landenlabs.all_stop;
 
-/**
- */
-interface AppAction {
+import static com.landenlabs.all_stop.SettingDialog.restoreAppTheme;
 
-    int STATUS_OK = 0;
-    int STATUS_ERROR = 1;
+import android.app.Application;
+
+public class MainApp extends Application {
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        // This ensures the theme is set globally before any
+        // Activity (like MainActivity) tries to inflate its resources.
+        restoreAppTheme(this);
+    }
 }

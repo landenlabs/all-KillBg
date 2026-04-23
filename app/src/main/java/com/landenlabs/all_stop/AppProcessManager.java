@@ -19,10 +19,10 @@
  * @see https://LanDenLabs.com/
  */
 
-package com.landenlabs.all_killbg;
+package com.landenlabs.all_stop;
 
 import static android.content.Context.ACTIVITY_SERVICE;
-import static com.landenlabs.all_killbg.AppConstants.APP_TAG;
+import static com.landenlabs.all_stop.AppConstants.APP_TAG;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -41,6 +41,9 @@ import androidx.annotation.Nullable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  */
@@ -50,16 +53,19 @@ class AppProcessManager {
     private final Context context;
     private final ActivityManager activityManager;
     private final ArrayList<ProcInfo> dataList = new ArrayList<>();
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     private int stopProcIdx = -1;
     public boolean isJobRunning = false;
 
-    public void saveToBundle(Bundle outState) {
+    public void saveToBundle(@NonNull Bundle outState) {
         outState.putBoolean("isJobRunning", isJobRunning);
     }
 
-    public void loadFromBundle(Bundle inState) {
-        isJobRunning = inState.getBoolean("isJobRunning");
+    public void loadFromBundle(@Nullable Bundle inState) {
+        if (inState != null) {
+            isJobRunning = inState.getBoolean("isJobRunning");
+        }
         if (stopProcIdx == -1 && dataList.isEmpty()) {
              loadList(null);
              stopProcIdx = 0;
@@ -67,10 +73,10 @@ class AppProcessManager {
     }
 
     public interface ProcAction extends AppAction {
-        void done(AppProcessManager mgr, int status, String msg);
+        void done(@NonNull AppProcessManager mgr, int status, @NonNull String msg);
     }
 
-    AppProcessManager(Activity activity) {
+    AppProcessManager(@NonNull Activity activity) {
         context = activity;
         activityManager = (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
     }
@@ -110,71 +116,44 @@ class AppProcessManager {
         }
     }
 
-    private void openAppDetailSettings(String packageName) {
+    private void openAppDetailSettings(@NonNull String packageName) {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         intent.setData(Uri.parse("package:" + packageName));
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
     }
 
+    @NonNull
     synchronized ArrayList<ProcInfo> getList() {
         return dataList;
     }
 
     synchronized void loadList(@Nullable ProcAction action) {
-        dataList.clear();
+        executorService.execute(() -> {
+            synchronized (dataList) {
+                dataList.clear();
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
-            UsageStatsManager usm = (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
-            long endTime = System.currentTimeMillis();
-            long startTime = endTime - 1000 * 60 * 60 * 24; // Last 24 hours
-
-            /*
-            List<UsageStats> usageStatsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_BEST, startTime, endTime);
-
-            if (usageStatsList != null && !usageStatsList.isEmpty()) {
-                // Use a map to keep only the most recent entry for each package
-                TreeMap<String, UsageStats> latestStats = new TreeMap<>();
-                for (UsageStats usageStats : usageStatsList) {
-                    String pkg = usageStats.getPackageName();
-                    if (!pkg.equals(context.getPackageName())) {
-                        UsageStats existing = latestStats.get(pkg);
-                        if (existing == null || usageStats.getLastTimeUsed() > existing.getLastTimeUsed()) {
-                            latestStats.put(pkg, usageStats);
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
+                    // Fallback: If no usage stats (maybe permission missing), show all installed apps
+                    loadInstalledApps();
+                } else {
+                    // Legacy fallback
+                    List<ActivityManager.RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
+                    if (processes != null) {
+                        for (ActivityManager.RunningAppProcessInfo proc : processes) {
+                            ProcInfo procInfo = new ProcInfo();
+                            procInfo.name = proc.processName;
+                            procInfo.pkgName = (proc.pkgList != null && proc.pkgList.length > 0) ? proc.pkgList[0] : proc.processName;
+                            procInfo.importance = proc.importance;
+                            procInfo.state = ProcInfo.getImportance(proc.importance);
+                            dataList.add(procInfo);
                         }
                     }
                 }
-
-                for (UsageStats usageStats : latestStats.values()) {
-                    ProcInfo procInfo = new ProcInfo();
-                    procInfo.name = usageStats.getPackageName();
-                    procInfo.pkgName = usageStats.getPackageName();
-                    procInfo.startTime = usageStats.getFirstTimeStamp();
-                    procInfo.state = "Recent";
-                    // Note: We can't get real PID/Size for other apps on modern Android without root
-                    dataList.add(procInfo);
-                }
-            } else */ {
-                // Fallback: If no usage stats (maybe permission missing), show all installed apps
-                loadInstalledApps();
             }
-        } else {
-            // Legacy fallback
-            List<ActivityManager.RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
-            if (processes != null) {
-                for (ActivityManager.RunningAppProcessInfo proc : processes) {
-                    ProcInfo procInfo = new ProcInfo();
-                    procInfo.name = proc.processName;
-                    procInfo.pkgName = (proc.pkgList != null && proc.pkgList.length > 0) ? proc.pkgList[0] : proc.processName;
-                    procInfo.importance = proc.importance;
-                    procInfo.state = ProcInfo.getImportance(proc.importance);
-                    dataList.add(procInfo);
-                }
-            }
-        }
-
-        if (action != null)
-            action.done(this, dataList.isEmpty() ? ProcAction.STATUS_ERROR : ProcAction.STATUS_OK, "");
+            if (action != null)
+                action.done(this, dataList.isEmpty() ? ProcAction.STATUS_ERROR : ProcAction.STATUS_OK, "");
+        });
     }
 
     private void loadInstalledApps() {
@@ -221,20 +200,14 @@ class AppProcessManager {
 
         @NonNull
         public String toString() {
-
-            final SimpleDateFormat dateFmt = new SimpleDateFormat("EEE  hh:mm a z");
-
-            //int[] myMempid = new int[]{pid};
-            //Debug.MemoryInfo[] memoryInfo = myActivityManager.getProcessMemoryInfo(myMempid);
-            //double memSizeKB = memoryInfo[0].dalvikPrivateDirty / 1024.0;
-
+            final SimpleDateFormat dateFmt = new SimpleDateFormat("EEE  hh:mm a z", Locale.US);
             String importanceStr = getImportance(importance);
 
             return name
                     + "\nPid: " + pid
                     + "\nState: " + state
                     + "\nStartTm: " + dateFmt.format(startTime)
-                    + String.format("\nMemory: %.2f KB", procSize / 1024.0)
+                    + String.format(Locale.US, "\nMemory: %.2f KB", procSize / 1024.0)
                     + "\n" + importanceStr;
         }
     }

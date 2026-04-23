@@ -19,7 +19,7 @@
  * @see https://LanDenLabs.com/
  */
 
-package com.landenlabs.all_killbg;
+package com.landenlabs.all_stop;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -39,7 +39,7 @@ import java.util.ArrayList;
 
 
 /**
- * Kill list - used by kill service.
+ * Stop list - used by stop service.
  */
 @SuppressWarnings("Convert2Lambda")
 public class BlackListActivity extends Activity {

@@ -1,17 +1,18 @@
-// All-KillBg
+// All-Stop
 // module build.gradle
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.google.services)
 }
 
 android {
-    namespace = "com.landenlabs.all_killbg"
+    namespace = "com.landenlabs.all_stop"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.landenlabs.all_killbg"
-        minSdk = 21
+        applicationId = "com.landenlabs.all_stop"
+        minSdk = 23
         targetSdk = 35
 
         versionCode = 60419
@@ -73,7 +74,12 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.preference)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.google.material)
     implementation(libs.android.processes)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
 }
 
 // Rename app - Fixed for AGP 9.x using androidComponents

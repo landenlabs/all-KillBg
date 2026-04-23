@@ -20,8 +20,9 @@
   ~ @see https://landenLabs.com/
   -->
 
-<RelativeLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/app_list_layout"
     android:layout_width="match_parent"
@@ -30,43 +31,43 @@
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
-    <RelativeLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/topBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        style="@style/BarBackground"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/centerStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            style="@style/StatusText"
+            android:layout_width="0dp"
             android:gravity="center"
-            android:textSize="18sp"
+            app:layout_constraintEnd_toStartOf="@+id/rightStatus"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             tools:text="--List---" />
 
         <TextView
             android:id="@+id/rightStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:textSize="18sp"
+            style="@style/StatusText"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             tools:text="Free Mem: 999 MB" />
 
-    </RelativeLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:id="@+id/filterBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/topBar"
+        style="@style/BarBackground"
         android:background="@color/bg_control"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/topBar">
 
         <ImageView
             android:id="@+id/sort_by"
             android:layout_width="64dp"
             android:layout_height="match_parent"
             android:scaleType="fitCenter"
-            android:src="@drawable/killbg" />
+            android:src="@drawable/app_stop" />
 
         <RadioGroup
             android:layout_width="0dp"
@@ -74,9 +75,6 @@
             android:layout_weight="1"
             android:orientation="horizontal">
 
-            <!--
-               android:button="@drawable/radio_btn_selector"
-            -->
             <RadioButton
                 android:id="@+id/show_pkg"
                 style="@style/Btn"
@@ -84,20 +82,15 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:checked="true"
-                android:textColor="@drawable/btn_color_state"
                 android:button="@null"
                 android:focusable="true"
                 android:text="Show\nApps" />
 
-            <!--
-                android:button="@drawable/radio_btn_selector"
-            -->
             <RadioButton
                 android:id="@+id/show_proc"
                 style="@style/Btn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:textColor="@drawable/btn_color_state"
                 android:button="@null"
                 android:layout_weight="1"
                 android:text="Show\nProcess" />
@@ -117,21 +110,20 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dataList"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@+id/botBar"
-        android:layout_below="@+id/filterBar"
+        android:layout_height="0dp"
         android:background="@drawable/bg_paper"
+        app:layout_constraintBottom_toTopOf="@+id/botBar"
+        app:layout_constraintTop_toBottomOf="@+id/filterBar"
         tools:listitem="@layout/list_row_pkg" />
 
     <LinearLayout
         android:id="@+id/botBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        style="@style/BarBackground"
         android:background="#aaa"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-        <FrameLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1">
@@ -141,27 +133,29 @@
                 style="@style/Btn"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Stop All\nApps" />
+                android:text="Stop All\nApps"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <View
-                android:elevation="10dp"
                 android:id="@+id/stop_apps_badge"
                 android:layout_width="12dp"
                 android:layout_height="12dp"
-                android:layout_gravity="top|end"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="8dp"
                 android:background="@drawable/badge_dot"
-                android:visibility="gone" />
-        </FrameLayout>
+                android:elevation="10dp"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <Button
-            android:enabled="false"
             android:id="@+id/stop_services"
             style="@style/Btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:enabled="false"
             android:text="Stop\nService" />
 
         <Button
@@ -172,4 +166,4 @@
             android:layout_weight="1"
             android:text="Edit\nSafe List" />
     </LinearLayout>
-</RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

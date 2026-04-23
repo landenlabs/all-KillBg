@@ -18,4 +18,6 @@
     <color name="list_text_color">#DDDDDD</color>
     <color name="sort_highlight">#FFFF00</color>
 
+    <color name="row_bg_odd">#1E1E1E</color>
+    <color name="row_bg_even">#252525</color>
 </resources>

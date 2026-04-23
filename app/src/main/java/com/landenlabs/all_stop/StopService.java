@@ -19,7 +19,7 @@
  * @see https://LanDenLabs.com/
  */
 
-package com.landenlabs.all_killbg;
+package com.landenlabs.all_stop;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -42,7 +42,7 @@ public class StopService extends Service {
     private ArrayList<String> blackName;
     private ActivityManager myActivityManagerService;
 
-    private static final int SRV_KILL_MSG = 0x1233;
+    private static final int SRV_STOP_MSG = 0x1233;
 
 
     @Override
@@ -71,7 +71,7 @@ public class StopService extends Service {
         final Handler myHandler = new Handler(Looper.myLooper()) {
             @Override
             public void handleMessage(Message msg) {
-                if (msg.what == SRV_KILL_MSG) {
+                if (msg.what == SRV_STOP_MSG) {
                     for (int i = 0; i < blackName.size(); i++) {
                         myActivityManagerService.killBackgroundProcesses(blackName.get(i));
                     }
@@ -81,7 +81,7 @@ public class StopService extends Service {
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
-                myHandler.sendEmptyMessage(SRV_KILL_MSG);
+                myHandler.sendEmptyMessage(SRV_STOP_MSG);
             }
         }, 0, TimeUnit.MINUTES.toMillis(30));
         return START_STICKY;

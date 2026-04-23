@@ -1,17 +1,17 @@
-# LanDen Labs - all-KillBg
+# LanDen Labs - all-stop
 <br>18-Arp-2026
 <br>API 36 AndroidX Java
 <br>[Home website](https://landenlabs.com/android/index.html)
 
 <img src="screenshots/landenlabs.webp" width="300" alt="Logo">
 
-An Android utility application to manage and kill background processes, view process details, and monitor system memory.
+An Android utility application to manage and stop processes, view process details, and monitor system memory.
 
 ## Features
 
 - **Process Management**: View a list of running processes and packages.
-- **Kill Background Tasks**: Easily terminate background processes to free up memory.
-- **Kill List**: Maintain a list of specific processes to be targeted.
+- **Stop Background Tasks**: Easily terminate background processes to free up memory.
+- **Stop List**: Maintain a list of specific processes to be targeted.
 - **Process Details**: View in-depth information about individual processes.
 - **Memory Monitor**: Real-time display of available system memory.
 - **Modern Android Stack**: Updated to use the latest Android tools and practices.

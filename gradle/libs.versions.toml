@@ -4,12 +4,21 @@ appcompat = "1.7.1"
 recyclerview = "1.4.0"
 preference = "1.2.1"
 android-processes = "1.1.1"
+google-services = "4.4.2"
+firebase-bom = "34.12.0"
+material = "1.12.0"
+constraintlayout = "2.2.1"
 
 [libraries]
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 androidx-preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+google-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 android-processes = { group = "com.jaredrummler", name = "android-processes", version.ref = "android-processes" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }

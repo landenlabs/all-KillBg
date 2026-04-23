@@ -19,9 +19,9 @@
  * @see https://LanDenLabs.com/
  */
 
-package com.landenlabs.all_killbg;
+package com.landenlabs.all_stop;
 
-import static com.landenlabs.all_killbg.AppConstants.APP_TAG;
+import static com.landenlabs.all_stop.AppConstants.APP_TAG;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -41,20 +41,24 @@ import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.landenlabs.all_killbg.AppPackageManager.PkgInfo;
-import com.landenlabs.all_killbg.AppProcessManager.ProcInfo;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.analytics.FirebaseAnalytics;
+import com.landenlabs.all_stop.AppPackageManager.PkgInfo;
+import com.landenlabs.all_stop.AppProcessManager.ProcInfo;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -64,17 +68,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private ActivityResultLauncher<Intent> accessibilitySettingsLauncher;
     private ActivityResultLauncher<Intent> appDetailsLauncher;
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     // ---------------------------------------------------------------------------------------------
-    private static int lastListIndex = 0;
-    private static int lastTopOff = 0;
-    private static int focusID = 0;
+    private int lastListIndex = 0;
+    private int lastTopOff = 0;
+    private int focusID = 0;
 
     private ActivityManager myActivityManager;
     private AppProcessManager appProcessManager;
     private AppPackageManager appPackageManager;
 
-    private final ArrayList<String> killList = new ArrayList<>();
+    private final ArrayList<String> stopList = new ArrayList<>();
 
     private enum DisplayType {Packages, Processes}
 
@@ -98,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // restoreAppTheme(this);
         getDelegate();
 
-        @ColorInt int textColorPrimary = getResources().getColor(R.color.text_primary);
+        @ColorInt int textColorPrimary = ContextCompat.getColor(this, R.color.text_primary);
         Log.i(APP_TAG, "textColorPrimary: " + (textColorPrimary & 0xffffff));
         if (textColorPrimary != 0) {
             Log.e(APP_TAG, "textColorPrimary failed to change to 0");
@@ -114,6 +119,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> updateList()
         );
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        boolean isAccessEnabled = isAccessibilityServiceEnabled();
+        mFirebaseAnalytics.setUserProperty("accessibility_enabled", String.valueOf(isAccessEnabled));
+        Bundle runBundle = new Bundle();
+        runBundle.putBoolean("accessibility_enabled", isAccessEnabled);
+        mFirebaseAnalytics.logEvent("app_run", runBundle);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -141,15 +153,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         sortBtn.setImageResource(sortMode.iconRes);
 
-        appPackageManager.loadPackageIcons(0);  // Should this be async
-        loadKillList(this);
+        appPackageManager.loadPackageIcons(0, (count) -> runOnUiThread(this::updateList));
+        loadStopList(this);
         loadDisplaySettings();
         setupRecyclerView();
         updateBottomBarVisibility();
     }
 
     @Override
-    public void onClick(View v) {
+    public void onClick(@NonNull View v) {
         int id = v.getId();
 
         if (id == R.id.show_pkg) {
@@ -161,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             saveDisplaySettings();
             updateList();
         } else if (id == R.id.stop_apps) {
+            mFirebaseAnalytics.logEvent("stop_apps_clicked", null);
             if (isAccessibilityServiceEnabled()) {
                 appProcessManager.stopProcesses();
                 updateList();
@@ -168,11 +181,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 showAccessibilityDialog();
             }
         } else if (id == R.id.stop_services) {
-            final Intent intentKillService = new Intent(MainActivity.this, StopService.class);
-            startService(intentKillService);
+            final Intent intentStopService = new Intent(MainActivity.this, StopService.class);
+            startService(intentStopService);
         } else if (id == R.id.EditBlackList) {
-            final Intent intentKillList = new Intent(MainActivity.this, BlackListActivity.class);
-            startActivity(intentKillList);
+            final Intent intentStopList = new Intent(MainActivity.this, BlackListActivity.class);
+            startActivity(intentStopList);
         } else if (id == R.id.settings_icon) {
             new SettingDialog().show(MainActivity.this);
         } else if (id == R.id.sort_by) {
@@ -185,6 +198,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void updateBottomBarVisibility() {
         boolean isEnabled = isAccessibilityServiceEnabled();
+        if (mFirebaseAnalytics != null) {
+            mFirebaseAnalytics.setUserProperty("accessibility_enabled", String.valueOf(isEnabled));
+        }
         if (stopAppsBadge != null) {
             stopAppsBadge.setVisibility(isEnabled ? View.GONE : View.VISIBLE);
         }
@@ -232,17 +248,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void showAccessibilityDialog() {
-        new AlertDialog.Builder(this).setTitle("Permission Required")
-                .setMessage("""
-                        To automate stopping apps, you must enable the Accessibility Service for 'all KillBg'.
-                        
-                        1. Click 'Go to Settings'
-                        2. Find 'all KillBg' in the list
-                        3. Turn the switch ON""")
-                .setPositiveButton("Go to Settings", (dialog, which) -> {
+        new AlertDialog.Builder(this).setTitle(R.string.accessibility_dialog_title)
+                .setMessage(R.string.accessibility_dialog_message)
+                .setPositiveButton(R.string.go_to_settings, (dialog, which) -> {
                     Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
                     accessibilitySettingsLauncher.launch(intent);
-                }).setNegativeButton("Cancel", (dialog, which) -> updateBottomBarVisibility()).show();
+                }).setNegativeButton(R.string.cancel, (dialog, which) -> updateBottomBarVisibility()).show();
     }
 
     @Override
@@ -267,26 +278,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onStop();
     }
     public void onDestroy() {
-        // Log.d(APP_TAG, "onDestroy called. Is finishing: " + isFinishing());
         super.onDestroy();
-        saveKillList();
+        saveStopList();
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        // Log.d(APP_TAG, "onSaveInstanceState, jobRunning: " + appProcessManager.isJobRunning);
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         appProcessManager.saveToBundle(outState);
+        outState.putInt("lastListIndex", lastListIndex);
+        outState.putInt("lastTopOff", lastTopOff);
+        outState.putInt("focusID", focusID);
     }
 
     @Override
-    protected void onRestoreInstanceState(Bundle inState) {
-        // Log.d(APP_TAG, "onRestoreInstanceState " + appProcessManager);
+    protected void onRestoreInstanceState(@NonNull Bundle inState) {
         super.onRestoreInstanceState(inState);
         appProcessManager.loadFromBundle(inState);
+        lastListIndex = inState.getInt("lastListIndex", 0);
+        lastTopOff = inState.getInt("lastTopOff", 0);
+        focusID = inState.getInt("focusID", 0);
     }
 
-// ----- Private
+    // ----- Private
 
     // Save list state, position and focus
     private void saveState() {
@@ -323,34 +337,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         dataList.setLayoutManager(new LinearLayoutManager(this));
     }
 
-    private void onListItemClick(DataItem dataItem) {
+    private void onListItemClick(@NonNull DataItem dataItem) {
         switch (displayType) {
             case Packages -> openAppDetailSettings(dataItem);
-            case Processes -> processKillDialog(dataItem);
+            case Processes -> processStopDialog(dataItem);
         }
     }
 
-    private boolean onListItemLongClick(DataItem dataItem) {
+    private boolean onListItemLongClick(@NonNull DataItem dataItem) {
         processExtraDialog(dataItem);
         return true;
     }
 
     // ---------------------------------------------------------------------------------------------
 
-    private void processExtraDialog(final DataItem dataItem) {
+    private void processExtraDialog(@NonNull final DataItem dataItem) {
         final String processName = dataItem.name;
         android.content.DialogInterface.OnClickListener listener1 = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 if (which == 0) {
                     myActivityManager.killBackgroundProcesses(processName);
                     updateList();
-                    makeToast("Killed Background for " + processName);
+                    makeSnackbar(getString(R.string.stopped_for, processName));
                 } else if (which == 1) {
                     showDetails(dataItem);
                 } else if (which == 2) {
-                    killList.add(processName);
-                    saveKillList();
-                    makeToast(" New kill list size " + killList.size());
+                    stopList.add(processName);
+                    saveStopList();
+                    makeSnackbar(getString(R.string.new_stop_list_size, stopList.size()));
                 }
             }
         };
@@ -362,16 +376,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }).show();
     }
 
-    private void processKillDialog(DataItem dataItem) {
+    private void processStopDialog(@NonNull DataItem dataItem) {
         final String processName = dataItem.name;
-        new AlertDialog.Builder(MainActivity.this).setMessage("Kill Process\n" + processName).setPositiveButton("Kill", new DialogInterface.OnClickListener() {
+        new AlertDialog.Builder(MainActivity.this).setMessage(getString(R.string.stop_process_title, processName)).setPositiveButton(R.string.stop_btn, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 myActivityManager.killBackgroundProcesses(processName);
                 updateList();
-                makeToast("Killed Bg " + processName);
+                makeSnackbar(getString(R.string.stopped_for, processName));
             }
-        }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
@@ -379,11 +393,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }).create().show();
     }
 
-    private String str(String s) {
+    private String str(@Nullable String s) {
         return s == null ? "" : s;
     }
 
-    private void highlightText(TextView textView, String fullText, String subText) {
+    private void highlightText(@NonNull TextView textView, @NonNull String fullText, @Nullable String subText) {
         if (subText == null || subText.isEmpty()) {
             textView.setText(fullText);
             return;
@@ -391,7 +405,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         SpannableString spannable = new SpannableString(fullText);
         int start = fullText.indexOf(subText);
         if (start != -1) {
-            int highlightColor = getResources().getColor(R.color.sort_highlight);
+            int highlightColor = ContextCompat.getColor(this, R.color.sort_highlight);
             spannable.setSpan(new ForegroundColorSpan(highlightColor), start, start + subText.length(), 0);
         }
         textView.setText(spannable);
@@ -401,7 +415,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         dataList.setAdapter(null);
 
         switch (displayType) {
-            case Packages -> appPackageManager.loadList((mgr, status, msg) -> {
+            case Packages -> appPackageManager.loadList((mgr, status, msg) -> runOnUiThread(() -> {
                 if (status == AppPackageManager.PkgAction.STATUS_OK) {
                     ArrayList<PkgInfo> list = new ArrayList<>(mgr.getList());
                     Collections.sort(list, (PkgInfo a, PkgInfo b) -> switch (sortMode) {
@@ -425,7 +439,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 String highlight = switch (mode) {
                                     case AppName -> item.label;
                                     case Date -> {
-                                        java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("MM/dd/yyyy  HH:mm");
+                                        java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("MM/dd/yyyy  HH:mm", Locale.US);
                                         yield (item.packInfo != null && item.packInfo.firstInstallTime != item.packInfo.lastUpdateTime)
                                                 ? "Install Last " + fmt.format(item.packInfo.lastUpdateTime)
                                                 : "Installed " + (item.packInfo != null ? fmt.format(item.packInfo.firstInstallTime) : "");
@@ -443,13 +457,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     adapter.setOnItemLongClickListener(this::onListItemLongClick);
                     arrayAdapter = adapter;
                     dataList.setAdapter(arrayAdapter);
-                    makeToast("Refresh Completed");
-                    upDateMemInfo();
+                    makeSnackbar(getString(R.string.refresh_completed));
+                    updateMemInfo();
                 } else {
-                    makeToast("Failed to load packages " + msg);
+                    makeSnackbar(getString(R.string.failed_to_load_packages, msg));
                 }
-            });
-            case Processes -> appProcessManager.loadList((mgr, status, msg) -> {
+            }));
+            case Processes -> appProcessManager.loadList((mgr, status, msg) -> runOnUiThread(() -> {
                 if (status == AppProcessManager.ProcAction.STATUS_OK) {
                     ArrayList<ProcInfo> list = new ArrayList<>(mgr.getList());
                     Collections.sort(list, (ProcInfo a, ProcInfo b) -> switch (sortMode) {
@@ -464,7 +478,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 String fullText = item.toString();
                                 String highlight = switch (mode) {
                                     case AppName -> item.name;
-                                    case Date -> "StartTm: " + new java.text.SimpleDateFormat("EEE  hh:mm a z").format(item.startTime);
+                                    case Date -> "StartTm: " + new java.text.SimpleDateFormat("EEE  hh:mm a z", Locale.US).format(item.startTime);
                                     case Id -> item.state;
                                 };
                                 highlightText(holder.textView, fullText, highlight);
@@ -478,32 +492,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     adapter.setOnItemLongClickListener(this::onListItemLongClick);
                     arrayAdapter = adapter;
                     dataList.setAdapter(arrayAdapter);
-                    makeToast("Refresh Completed");
-                    upDateMemInfo();
+                    makeSnackbar(getString(R.string.refresh_completed));
+                    updateMemInfo();
                 } else {
-                    makeToast("Failed to load process " + msg);
+                    makeSnackbar(getString(R.string.failed_to_load_process, msg));
                 }
-            });
+            }));
+        }
+    }
         }
     }
 
-    private void openAppDetailSettings(DataItem dataItem) {
+    private void openAppDetailSettings(@NonNull DataItem dataItem) {
         // Manual open from list - do NOT enable automation
         StopProcByAccessibilityService.setRunning(false);
 
         Intent intent = new Intent("android.settings.APPLICATION_DETAILS_SETTINGS", Uri.fromParts("package", dataItem.pkgName, null));
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         appDetailsLauncher.launch(intent);
-        makeToast(dataItem.pkgName);
+        makeSnackbar(dataItem.pkgName);
     }
 
 
-    private void upDateMemInfo() {
+    private void updateMemInfo() {
         ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
         myActivityManager.getMemoryInfo(memoryInfo);
         long memSize = memoryInfo.availMem;
         String freeMemSize = Formatter.formatFileSize(getBaseContext(), memSize);
-        rightStatusTv.setText("Free Memory: " + freeMemSize);
+        rightStatusTv.setText(getString(R.string.free_memory_format, freeMemSize));
 
         if (arrayAdapter != null) {
             int count = arrayAdapter.getItemCount();
@@ -517,75 +533,45 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    @SuppressWarnings("deprecation")
-    private void makeToast(String str) {
-        Toast toast = Toast.makeText(MainActivity.this, str, Toast.LENGTH_SHORT);
-        View toastView = toast.getView();
-
-        ImageView image = new ImageView(MainActivity.this);
-        image.setImageResource(R.drawable.killbg);
-        LinearLayout ll = new LinearLayout(MainActivity.this);
-
-        // int dim = Math.round(getResources().getDimension(R.dimen.toastIconDim));
-        int dim = 256;       // TODO - fix so resources work.
-
-        ll.addView(image, new LinearLayout.LayoutParams(dim, dim));
-        //    ll.addView(toastView);
-        toast.setView(ll);
-        toast.show();
+    private void makeSnackbar(String str) {
+        Snackbar.make(findViewById(android.R.id.content), str, Snackbar.LENGTH_SHORT).show();
     }
 
     //  ProcInfo processInfo = adapterProcList.get(position);
-    private void showDetails(DataItem dataItem) {
-        Intent intentKillService = new Intent(this, ShowDetailActivity.class);
-        intentKillService.putExtra("EXTRA_PROCESS_NAME", dataItem.name);
+    private void showDetails(@NonNull DataItem dataItem) {
+        Intent intentStopService = new Intent(this, ShowDetailActivity.class);
+        intentStopService.putExtra("EXTRA_PROCESS_NAME", dataItem.name);
 
         if (dataItem instanceof ProcInfo procInfo) {
-            intentKillService.putExtra("EXTRA_PROCESS_PID", procInfo.pid + "");
-            intentKillService.putExtra("EXTRA_PROCESS_IMPORTANCE", procInfo.importance + "");
+            intentStopService.putExtra("EXTRA_PROCESS_PID", procInfo.pid + "");
+            intentStopService.putExtra("EXTRA_PROCESS_IMPORTANCE", procInfo.importance + "");
         }
-        // intentKillService.putExtra("EXTRA_PROCESS_UID", processInfo.uid + "");
-        /*
-        intentKillService.putExtra("EXTRA_PROCESS_IMPORTANCE_REASON_CODE",
-                processInfo.importanceReasonCode + "");
-        intentKillService.putExtra("EXTRA_PROCESS_IMPORTANCE_REASON_PID",
-                processInfo.importanceReasonPid + "");
-        intentKillService.putExtra("EXTRA_PROCESS_LRU", processInfo.lru + "");
-        intentKillService.putExtra("EXTRA_PKGNAMELIST", processInfo.pkgList);
-        */
-        startActivity(intentKillService);
+        startActivity(intentStopService);
     }
 
-    private void saveKillList() {
-        SharedPreferences preferences = getSharedPreferences("main", Context.MODE_PRIVATE);
-        SharedPreferences.Editor mEdit = preferences.edit();
-        mEdit.putInt("Status_size", killList.size());
-        for (int i = 0; i < killList.size(); i++) {
-            mEdit.remove("Status_" + i);
-            mEdit.putString("Status_" + i, killList.get(i));
-        }
-        mEdit.apply();
+    private void saveStopList() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        preferences.edit().putStringSet("stop_list", new java.util.HashSet<>(stopList)).apply();
     }
 
-    private void loadKillList(Context context) {
-        SharedPreferences preference = getSharedPreferences("main", Context.MODE_PRIVATE);
-        killList.clear();
-        int size = preference.getInt("Status_size", 0);
-        for (int i = 0; i < size; i++) {
-            killList.add(preference.getString("Status_" + i, null));
+    private void loadStopList(@NonNull Context context) {
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(context);
+        java.util.Set<String> set = preference.getStringSet("stop_list", null);
+        stopList.clear();
+        if (set != null) {
+            stopList.addAll(set);
         }
     }
 
     private void saveDisplaySettings() {
-        SharedPreferences preferences = getSharedPreferences("main", Context.MODE_PRIVATE);
-        preferences.edit()
+        PreferenceManager.getDefaultSharedPreferences(this).edit()
                 .putInt("DisplayType", displayType.ordinal())
                 .putInt("SortMode", sortMode.ordinal())
                 .apply();
     }
 
     private void loadDisplaySettings() {
-        SharedPreferences preferences = getSharedPreferences("main", Context.MODE_PRIVATE);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         int displayOrdinal = preferences.getInt("DisplayType", DisplayType.Packages.ordinal());
         int sortOrdinal = preferences.getInt("SortMode", SortMode.AppName.ordinal());
 

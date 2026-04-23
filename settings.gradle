@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "all-KillBg"
+rootProject.name = "all-Stop"
 include ':app'

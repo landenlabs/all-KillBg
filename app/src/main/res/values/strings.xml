@@ -22,7 +22,7 @@
 
 <resources>
 
-    <string name="app_name">all KillBg</string>
+    <string name="app_name">all-Stop</string>
     <string name="menu_settings">Menu Settings</string>
 
     <string name="proNum">Items: </string>
@@ -34,13 +34,25 @@
     <string name="tasks">Tasks</string>
 
     <string-array name="operation">
-        <item>Kill Bg</item>
-        <item>Show Detail</item>
-        <item>Add to Kill List</item>
+        <item>Stop apps</item>
+        <item>Show detail</item>
+        <item>Manage stop list</item>
     </string-array>
 
     <string name="activity_proc_details">ProcDetails</string>
-    <string name="black_stop_list">KillList</string>
-    <string name="action_settings">Kill Menu</string>
+    <string name="black_stop_list">StopList</string>
+    <string name="action_settings">Stop Menu</string>
+
+    <string name="accessibility_dialog_title">Permission Required</string>
+    <string name="accessibility_dialog_message">To automate stopping apps, you must enable the Accessibility Service for \'all-stop\'.\n\n1. Click \'Go to Settings\'\n2. Find \'all-stop\' in the list\n3. Turn the switch ON</string>
+    <string name="go_to_settings">Go to Settings</string>
+    <string name="stopped_for">Stopped for %s</string>
+    <string name="new_stop_list_size">New stop list size %d</string>
+    <string name="refresh_completed">Refresh Completed</string>
+    <string name="failed_to_load_packages">Failed to load packages %s</string>
+    <string name="failed_to_load_process">Failed to load process %s</string>
+    <string name="stop_process_title">Stop process\n%s</string>
+    <string name="stop_btn">Stop</string>
+    <string name="free_memory_format">Free Memory: %s</string>
 
 </resources>

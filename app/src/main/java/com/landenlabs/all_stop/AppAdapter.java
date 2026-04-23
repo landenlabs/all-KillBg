@@ -1,6 +1,26 @@
-package com.landenlabs.all_killbg;
+/*
+ * Copyright (c) 2026 Dennis Lang (LanDen Labs)
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ * associated documentation files (the "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
+ * following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+ * LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+ * NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * @author Dennis Lang
+ * @see https://LanDenLabs.com/
+ */
 
-import android.graphics.Color;
+package com.landenlabs.all_stop;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,6 +28,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
@@ -16,15 +38,15 @@ import java.util.List;
 public class AppAdapter<T extends DataItem> extends RecyclerView.Adapter<AppAdapter.ViewHolder> {
 
     public interface OnItemClickListener<T> {
-        void onItemClick(T item);
+        void onItemClick(@NonNull T item);
     }
 
     public interface OnItemLongClickListener<T> {
-        boolean onItemLongClick(T item);
+        boolean onItemLongClick(@NonNull T item);
     }
 
     public interface Binder<T> {
-        void bind(ViewHolder holder, T item, SortMode sortMode);
+        void bind(@NonNull ViewHolder holder, @NonNull T item, @NonNull SortMode sortMode);
     }
 
     private final List<T> items = new ArrayList<>();
@@ -43,7 +65,7 @@ public class AppAdapter<T extends DataItem> extends RecyclerView.Adapter<AppAdap
         this.binder = binder;
     }
 
-    public void setItems(List<T> newItems) {
+    public void setItems(@Nullable List<T> newItems) {
         items.clear();
         if (newItems != null) {
             items.addAll(newItems);
@@ -51,15 +73,15 @@ public class AppAdapter<T extends DataItem> extends RecyclerView.Adapter<AppAdap
         notifyDataSetChanged();
     }
 
-    public void setSortMode(SortMode sortMode) {
+    public void setSortMode(@NonNull SortMode sortMode) {
         this.sortMode = sortMode;
     }
 
-    public void setOnItemClickListener(OnItemClickListener<T> listener) {
+    public void setOnItemClickListener(@Nullable OnItemClickListener<T> listener) {
         this.clickListener = listener;
     }
 
-    public void setOnItemLongClickListener(OnItemLongClickListener<T> listener) {
+    public void setOnItemLongClickListener(@Nullable OnItemLongClickListener<T> listener) {
         this.longClickListener = listener;
     }
 
@@ -89,8 +111,8 @@ public class AppAdapter<T extends DataItem> extends RecyclerView.Adapter<AppAdap
         });
 
         // Alternating background color
-        holder.itemView.setBackgroundColor((position & 1) == 1 ? Color.WHITE : 0xffddffdd);
-        holder.itemView.setBackgroundResource(R.drawable.list_color_state);
+        int colorRes = (position % 2 == 1) ? R.color.row_bg_odd : R.color.row_bg_even;
+        holder.itemView.setBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(), colorRes));
     }
 
     @Override
