@@ -15,8 +15,8 @@ android {
         minSdk = 23
         targetSdk = 35
 
-        versionCode = 60419
-        versionName = '6.04.19' // 2026 April(04) 19th
+        versionCode = 60420
+        versionName = '6.04.20' // 2026 April(04) 20th
         // Restore the versionName resource for layouts
         resValue "string", "versionName", "v" + versionName
 
