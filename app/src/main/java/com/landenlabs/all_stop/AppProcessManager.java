@@ -95,14 +95,12 @@ class AppProcessManager {
             String pkgName = procInfo.pkgName != null ? procInfo.pkgName : procInfo.name;
             Log.d(APP_TAG, "Stopping: " + pkgName);
 
-            // 1. Try standard background kill (mostly ineffective on Android 14+)
-            activityManager.killBackgroundProcesses(pkgName);
-
-            // 2. Trigger Accessibility Automation by opening App Info page
+            // Use helper to stop/open settings
             if (!pkgName.equals(context.getPackageName())) {
                 isJobRunning = true;
                 StopProcByAccessibilityService.setRunning(true);
-                openAppDetailSettings(pkgName);
+                AppUtils.killProcess(context, activityManager, pkgName);
+
                 // Note: We break here because the Accessibility Service will handle the clicks
                 // and then return to this app. MainActivity.onResume will then be called
                 // to proceed to the next item in the list if automation is still active.
@@ -114,13 +112,6 @@ class AppProcessManager {
             stopProcIdx = -1;
             StopProcByAccessibilityService.setRunning(false);
         }
-    }
-
-    private void openAppDetailSettings(@NonNull String packageName) {
-        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        intent.setData(Uri.parse("package:" + packageName));
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
     }
 
     @NonNull

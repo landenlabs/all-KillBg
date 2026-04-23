@@ -55,13 +55,13 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.landenlabs.all_stop.AppPackageManager.PkgInfo;
 import com.landenlabs.all_stop.AppProcessManager.ProcInfo;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Locale;
 
 @SuppressWarnings("Convert2Lambda")
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -184,7 +184,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             final Intent intentStopService = new Intent(MainActivity.this, StopService.class);
             startService(intentStopService);
         } else if (id == R.id.EditBlackList) {
-            final Intent intentStopList = new Intent(MainActivity.this, BlackListActivity.class);
+            final Intent intentStopList = new Intent(MainActivity.this, SafeListActivity.class);
             startActivity(intentStopList);
         } else if (id == R.id.settings_icon) {
             new SettingDialog().show(MainActivity.this);
@@ -356,7 +356,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         android.content.DialogInterface.OnClickListener listener1 = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 if (which == 0) {
-                    myActivityManager.killBackgroundProcesses(processName);
+                    AppUtils.killProcess(MainActivity.this, myActivityManager, processName);
                     updateList();
                     makeSnackbar(getString(R.string.stopped_for, processName));
                 } else if (which == 1) {
@@ -381,7 +381,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         new AlertDialog.Builder(MainActivity.this).setMessage(getString(R.string.stop_process_title, processName)).setPositiveButton(R.string.stop_btn, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                myActivityManager.killBackgroundProcesses(processName);
+                AppUtils.killProcess(MainActivity.this, myActivityManager, processName);
                 updateList();
                 makeSnackbar(getString(R.string.stopped_for, processName));
             }
@@ -500,8 +500,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }));
         }
     }
-        }
-    }
 
     private void openAppDetailSettings(@NonNull DataItem dataItem) {
         // Manual open from list - do NOT enable automation
@@ -534,17 +532,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void makeSnackbar(String str) {
-        Snackbar.make(findViewById(android.R.id.content), str, Snackbar.LENGTH_SHORT).show();
+        AppUtils.showStatus(findViewById(android.R.id.content), str);
     }
 
     //  ProcInfo processInfo = adapterProcList.get(position);
     private void showDetails(@NonNull DataItem dataItem) {
         Intent intentStopService = new Intent(this, ShowDetailActivity.class);
-        intentStopService.putExtra("EXTRA_PROCESS_NAME", dataItem.name);
+        intentStopService.putExtra(ShowDetailActivity.EXTRA_PROCESS_NAME, dataItem.name);
 
         if (dataItem instanceof ProcInfo procInfo) {
-            intentStopService.putExtra("EXTRA_PROCESS_PID", procInfo.pid + "");
-            intentStopService.putExtra("EXTRA_PROCESS_IMPORTANCE", procInfo.importance + "");
+            intentStopService.putExtra(ShowDetailActivity.EXTRA_PROCESS_PID, procInfo.pid + "");
+            intentStopService.putExtra(ShowDetailActivity.EXTRA_PROCESS_IMPORTANCE, procInfo.importance + "");
         }
         startActivity(intentStopService);
     }

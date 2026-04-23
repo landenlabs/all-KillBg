@@ -21,7 +21,6 @@
 
 package com.landenlabs.all_stop;
 
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Service;
 import android.content.Context;
@@ -30,21 +29,26 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.Message;
-import android.widget.Toast;
+import android.util.Log;
+
+import androidx.annotation.Nullable;
+import androidx.preference.PreferenceManager;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 public class StopService extends Service {
-    private ArrayList<String> blackName;
-    private ActivityManager myActivityManagerService;
+    private final List<String> safeList = new ArrayList<>();
+    private ActivityManager activityManager;
 
-    private static final int SRV_STOP_MSG = 0x1233;
+    private static final String TAG = "StopService";
 
-
+    @Nullable
     @Override
     public IBinder onBind(Intent arg0) {
         return null;
@@ -54,38 +58,38 @@ public class StopService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        myActivityManagerService = (ActivityManager) getSystemService(Activity.ACTIVITY_SERVICE);
-        SharedPreferences pref = getSharedPreferences("main", Context.MODE_PRIVATE);
-        int size = pref.getInt("Status_size", 0);
-
-        blackName = new ArrayList<>();
-        for (int i = 0; i < size; i++) {
-            blackName.add(pref.getString("Status_" + i, null));
-        }
-        Toast.makeText(this, "Service is Started", Toast.LENGTH_LONG).show();
+        activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        loadSafeList();
+        
+        Log.i(TAG, "Service Created");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flag, int startid) {
-        Toast.makeText(this, "Service is Running", Toast.LENGTH_LONG).show();
-        final Handler myHandler = new Handler(Looper.myLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                if (msg.what == SRV_STOP_MSG) {
-                    for (int i = 0; i < blackName.size(); i++) {
-                        myActivityManagerService.killBackgroundProcesses(blackName.get(i));
-                    }
-                }
-            }
-        };
+        Log.i(TAG, "Service Started");
+        
+        final Handler handler = new Handler(Looper.getMainLooper());
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
-                myHandler.sendEmptyMessage(SRV_STOP_MSG);
+                handler.post(() -> {
+                    Log.d(TAG, "Periodic Stop check running");
+                    for (String pkg : safeList) {
+                        AppUtils.killProcess(StopService.this, activityManager, pkg);
+                    }
+                });
             }
         }, 0, TimeUnit.MINUTES.toMillis(30));
+        
         return START_STICKY;
-
     }
 
+    private void loadSafeList() {
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+        Set<String> set = preference.getStringSet("stop_list", null);
+        safeList.clear();
+        if (set != null) {
+            safeList.addAll(set);
+        }
+    }
 }

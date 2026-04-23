@@ -55,4 +55,21 @@
     <string name="stop_btn">Stop</string>
     <string name="free_memory_format">Free Memory: %s</string>
 
+    <string name="manage_lists_title">Manage Stop and Safe List</string>
+    <string name="stop_list_label">Stop List (Regex)</string>
+    <string name="safe_list_label">Safe List (Regex)</string>
+    <string name="add_pattern">Add Pattern</string>
+    <string name="edit_pattern">Edit Pattern</string>
+    <string name="regex_hint">e.g. ^com\.android\..*</string>
+    <string name="invalid_regex">Invalid Regular Expression</string>
+    <string name="delete_selected_confirm">Delete %d selected items?</string>
+    <string name="clear_all_confirm">Clear entire list?</string>
+    <string name="save_btn">Save</string>
+    <string name="delete_confirm_msg">Remove from safe list?</string>
+    <string name="delete_btn">Delete</string>
+    <string name="ignore_btn">Ignore</string>
+    <string name="removed_item">Removed %s</string>
+    <string name="add_btn">+ Add</string>
+    <string name="del_btn">- Delete</string>
+
 </resources>

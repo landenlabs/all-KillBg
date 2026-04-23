@@ -21,15 +21,26 @@
 
 package com.landenlabs.all_stop;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+
 /**
  * Show Details about a process.
  */
-public class ShowDetailActivity extends Activity {
+public class ShowDetailActivity extends AppCompatActivity {
+
+    public static final String EXTRA_PROCESS_PID = "EXTRA_PROCESS_PID";
+    public static final String EXTRA_PROCESS_UID = "EXTRA_PROCESS_UID";
+    public static final String EXTRA_PROCESS_NAME = "EXTRA_PROCESS_NAME";
+    public static final String EXTRA_PROCESS_IMPORTANCE = "EXTRA_PROCESS_IMPORTANCE";
+    public static final String EXTRA_PROCESS_IMPORTANCE_REASON_CODE = "EXTRA_PROCESS_IMPORTANCE_REASON_CODE";
+    public static final String EXTRA_PROCESS_IMPORTANCE_REASON_PID = "EXTRA_PROCESS_IMPORTANCE_REASON_PID";
+    public static final String EXTRA_PROCESS_LRU = "EXTRA_PROCESS_LRU";
+    public static final String EXTRA_PKGNAMELIST = "EXTRA_PKGNAMELIST";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -37,65 +48,42 @@ public class ShowDetailActivity extends Activity {
         setContentView(R.layout.activity_detail);
 
         Intent intent = getIntent();
+        if (intent == null) return;
 
-        String processId = intent.getStringExtra("EXTRA_PROCESS_PID");
-        String processUid = intent.getStringExtra("EXTRA_PROCESS_UID");
-        String processName = intent.getStringExtra("EXTRA_PROCESS_NAME");
-        String processImportance = intent.getStringExtra("EXTRA_PROCESS_IMPORTANCE");
-        String processImportanceReasonCode =
-                intent.getStringExtra("EXTRA_PROCESS_IMPORTANCE_REASON_CODE");
-        String processImportanceReasonPid =
-                intent.getStringExtra("EXTRA_PROCESS_IMPORTANCE_REASON_PID");
-        String processLru = intent.getStringExtra("EXTRA_PROCESS_LRU");
-        String[] pkgNameList = intent.getStringArrayExtra("EXTRA_PKGNAMELIST");
+        String processId = intent.getStringExtra(EXTRA_PROCESS_PID);
+        String processUid = intent.getStringExtra(EXTRA_PROCESS_UID);
+        String processName = intent.getStringExtra(EXTRA_PROCESS_NAME);
+        String processImportance = intent.getStringExtra(EXTRA_PROCESS_IMPORTANCE);
+        String processImportanceReasonCode = intent.getStringExtra(EXTRA_PROCESS_IMPORTANCE_REASON_CODE);
+        String processImportanceReasonPid = intent.getStringExtra(EXTRA_PROCESS_IMPORTANCE_REASON_PID);
+        String processLru = intent.getStringExtra(EXTRA_PROCESS_LRU);
+        String[] pkgNameList = intent.getStringArrayExtra(EXTRA_PKGNAMELIST);
 
         String describe = "";
-
         try {
-            switch (Integer.parseInt(processImportance)) {
-                case 400:
-                    describe = "IMPORTANCE_BACKGROUND";
-                    break;
-                case 500:
-                    describe = "IMPORTANCE_EMPTY";
-                    break;
-                case 100:
-                    describe = "IMPORTANCE_FOREGROUND";
-                    break;
-                case 130:
-                    describe = "IMPORTANCE_PERCEPTIBLE";
-                    break;
-                case 300:
-                    describe = "IMPORTANCE_SERVICE";
-                    break;
-                case 200:
-                    describe = "IMPORTANCE_VISIBLE";
-                    break;
-                default:
-                    describe = "";
-                    break;
+            if (processImportance != null) {
+                describe = AppProcessManager.ProcInfo.getImportance(Integer.parseInt(processImportance));
             }
-        } catch (NumberFormatException ex) {
-            describe = "";
-        }
+        } catch (NumberFormatException ignore) {}
 
-        setText(this.findViewById(R.id.detailPid), processId);
-        setText(this.findViewById(R.id.detailUid), processUid);
-        setText(this.findViewById(R.id.detailName), processName);
-        setText(this.findViewById(R.id.detailImportance), processImportance + "\n" + describe);
-        setText(this.findViewById(R.id.detailImportanceReasonCode), processImportanceReasonCode);
-        setText(this.findViewById(R.id.detailImportanceReasonPid), processImportanceReasonPid);
-        setText(this.findViewById(R.id.detailLru), processLru);
+        setText(findViewById(R.id.detailPid), processId);
+        setText(findViewById(R.id.detailUid), processUid);
+        setText(findViewById(R.id.detailName), processName);
+        setText(findViewById(R.id.detailImportance), processImportance + "\n" + describe);
+        setText(findViewById(R.id.detailImportanceReasonCode), processImportanceReasonCode);
+        setText(findViewById(R.id.detailImportanceReasonPid), processImportanceReasonPid);
+        setText(findViewById(R.id.detailLru), processLru);
 
-        StringBuilder packageList = new StringBuilder();
         if (pkgNameList != null) {
-            for (String item : pkgNameList)
+            StringBuilder packageList = new StringBuilder();
+            for (String item : pkgNameList) {
                 packageList.append(item).append("\n");
+            }
+            setText(findViewById(R.id.detailPkgNameList), packageList.toString());
         }
-        setText(this.findViewById(R.id.detailPkgNameList), packageList.toString());
     }
 
-    private static void setText(TextView textView, String msg) {
+    private void setText(TextView textView, @Nullable String msg) {
         if (textView != null && msg != null) {
             textView.setText(msg);
         }

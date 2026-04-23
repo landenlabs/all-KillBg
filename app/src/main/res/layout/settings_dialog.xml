@@ -41,7 +41,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginVertical="16dp"
-            android:background="#33000000" />
+            android:background="@color/divider_color" />
 
         <TextView
             android:id="@+id/about_version"
@@ -84,7 +84,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginVertical="16dp"
-            android:background="#33000000" />
+            android:background="@color/divider_color" />
 
         <TextView
             android:layout_width="match_parent"
@@ -126,7 +126,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginVertical="16dp"
-            android:background="#33000000" />
+            android:background="@color/divider_color" />
 
         <TextView
             android:layout_width="match_parent"
@@ -161,7 +161,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginVertical="16dp"
-            android:background="#33000000" />
+            android:background="@color/divider_color" />
 
         <Button
             android:id="@+id/about_close_btn"

@@ -119,7 +119,7 @@
     <LinearLayout
         android:id="@+id/botBar"
         style="@style/BarBackground"
-        android:background="#aaa"
+        android:background="@color/bot_bar_bg"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent">
 

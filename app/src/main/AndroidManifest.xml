@@ -39,7 +39,7 @@
         </service>
 
         <activity
-            android:name="com.landenlabs.all_stop.BlackListActivity"
+            android:name="com.landenlabs.all_stop.SafeListActivity"
             android:label="@string/black_stop_list" >
         </activity>
 

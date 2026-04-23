@@ -20,4 +20,11 @@
 
     <color name="row_bg_odd">#1E1E1E</color>
     <color name="row_bg_even">#252525</color>
+
+    <color name="regex_list_bg">#11FFFFFF</color>
+    <color name="regex_item_selected">#660099CC</color>
+
+    <color name="bot_bar_bg">#333333</color>
+    <color name="detail_label_bg">#222222</color>
+    <color name="divider_color">#33FFFFFF</color>
 </resources>
