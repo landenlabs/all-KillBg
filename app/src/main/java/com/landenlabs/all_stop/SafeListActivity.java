@@ -31,6 +31,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -55,59 +56,107 @@ public class SafeListActivity extends AppCompatActivity {
 
     private RegexAdapter stopAdapter;
     private RegexAdapter safeAdapter;
+    private RecyclerView recyclerView;
+    private ImageButton delBtn;
+    private TextView descTv;
+    private ImageButton expandBtn;
 
     private static final String PREF_STOP_LIST = "stop_regex_list";
     private static final String PREF_SAFE_LIST = "safe_regex_list";
+    private static final String PREF_DESC_EXPANDED = "desc_expanded";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_list);
 
-        setupList(R.id.stop_recycler, R.id.add_stop, R.id.del_stop, R.id.clear_stop, PREF_STOP_LIST, true);
-        setupList(R.id.safe_recycler, R.id.add_safe, R.id.del_safe, R.id.clear_safe, PREF_SAFE_LIST, false);
-    }
-
-    private void setupList(int recyclerId, int addId, int delId, int clearId, String prefKey, boolean isStopList) {
-        RecyclerView recyclerView = findViewById(recyclerId);
-        ImageButton addBtn = findViewById(addId);
-        ImageButton delBtn = findViewById(delId);
-        ImageButton clearBtn = findViewById(clearId);
-
-        List<String> list = loadList(prefKey);
-        RegexAdapter adapter = new RegexAdapter(list, (selectedCount) -> delBtn.setEnabled(selectedCount > 0));
-        
-        if (isStopList) stopAdapter = adapter;
-        else safeAdapter = adapter;
-
+        recyclerView = findViewById(R.id.regex_recycler);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(adapter);
 
-        addBtn.setOnClickListener(v -> showEditDialog(null, -1, adapter, prefKey));
+        delBtn = findViewById(R.id.del_pattern_btn);
+        ImageButton addBtn = findViewById(R.id.add_pattern_btn);
+        ImageButton clearBtn = findViewById(R.id.clear_pattern_btn);
+
+        descTv = findViewById(R.id.desc);
+        expandBtn = findViewById(R.id.expand_desc_btn);
+        
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isExpanded = prefs.getBoolean(PREF_DESC_EXPANDED, false);
+        setDescExpanded(isExpanded);
+
+        expandBtn.setOnClickListener(v -> {
+            boolean current = descTv.getVisibility() == View.VISIBLE;
+            setDescExpanded(!current);
+            prefs.edit().putBoolean(PREF_DESC_EXPANDED, !current).apply();
+        });
+
+        // Initialize Adapters
+        stopAdapter = new RegexAdapter(loadList(PREF_STOP_LIST), this::onSelectionChanged);
+        safeAdapter = new RegexAdapter(loadList(PREF_SAFE_LIST), this::onSelectionChanged);
+
+        stopAdapter.setOnItemDoubleClickListener((item, pos) -> showEditDialog(item, pos, stopAdapter, PREF_STOP_LIST));
+        safeAdapter.setOnItemDoubleClickListener((item, pos) -> showEditDialog(item, pos, safeAdapter, PREF_SAFE_LIST));
+
+        // Default to Stop List
+        recyclerView.setAdapter(stopAdapter);
+
+        RadioGroup toggleGroup = findViewById(R.id.list_toggle_group);
+        toggleGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            RegexAdapter activeAdapter;
+            if (checkedId == R.id.toggle_stop) {
+                activeAdapter = stopAdapter;
+            } else {
+                activeAdapter = safeAdapter;
+            }
+            recyclerView.setAdapter(activeAdapter);
+            onSelectionChanged(activeAdapter.getSelectedCount());
+        });
+
+        addBtn.setOnClickListener(v -> {
+            RegexAdapter activeAdapter = getActiveAdapter();
+            String key = activeAdapter == stopAdapter ? PREF_STOP_LIST : PREF_SAFE_LIST;
+            showEditDialog(null, -1, activeAdapter, key);
+        });
+
         delBtn.setOnClickListener(v -> {
-            int count = adapter.getSelectedCount();
+            RegexAdapter activeAdapter = getActiveAdapter();
+            String key = activeAdapter == stopAdapter ? PREF_STOP_LIST : PREF_SAFE_LIST;
+            int count = activeAdapter.getSelectedCount();
             new AlertDialog.Builder(this)
                     .setMessage(getString(R.string.delete_selected_confirm, count))
                     .setPositiveButton(R.string.delete_btn, (d, w) -> {
-                        adapter.deleteSelected();
-                        saveList(prefKey, adapter.getItems());
+                        activeAdapter.deleteSelected();
+                        saveList(key, activeAdapter.getItems());
                     })
                     .setNegativeButton(R.string.cancel, null)
                     .show();
         });
 
         clearBtn.setOnClickListener(v -> {
+            RegexAdapter activeAdapter = getActiveAdapter();
+            String key = activeAdapter == stopAdapter ? PREF_STOP_LIST : PREF_SAFE_LIST;
             new AlertDialog.Builder(this)
                     .setMessage(R.string.clear_all_confirm)
                     .setPositiveButton(R.string.delete_btn, (d, w) -> {
-                        adapter.clearAll();
-                        saveList(prefKey, adapter.getItems());
+                        activeAdapter.clearAll();
+                        saveList(key, activeAdapter.getItems());
                     })
                     .setNegativeButton(R.string.cancel, null)
                     .show();
         });
+    }
 
-        adapter.setOnItemDoubleClickListener((item, position) -> showEditDialog(item, position, adapter, prefKey));
+    private RegexAdapter getActiveAdapter() {
+        return (RegexAdapter) recyclerView.getAdapter();
+    }
+
+    private void onSelectionChanged(int count) {
+        delBtn.setEnabled(count > 0);
+    }
+
+    private void setDescExpanded(boolean expanded) {
+        descTv.setVisibility(expanded ? View.VISIBLE : View.GONE);
+        expandBtn.setImageResource(expanded ? android.R.drawable.arrow_up_float : android.R.drawable.arrow_down_float);
     }
 
     private void showEditDialog(@Nullable String initialText, int position, RegexAdapter adapter, String prefKey) {
@@ -139,6 +188,7 @@ public class SafeListActivity extends AppCompatActivity {
     }
 
     private boolean isValidRegex(String regex) {
+        if (regex.isEmpty()) return false;
         try {
             Pattern.compile(regex);
             return true;
@@ -201,15 +251,18 @@ public class SafeListActivity extends AppCompatActivity {
 
             holder.itemView.setOnClickListener(v -> {
                 long clickTime = System.currentTimeMillis();
+                int currentPos = holder.getBindingAdapterPosition();
+                if (currentPos == RecyclerView.NO_POSITION) return;
+
                 if (clickTime - lastClickTime < 300) {
-                    if (doubleClickListener != null) doubleClickListener.onItemDoubleClick(item, position);
+                    if (doubleClickListener != null) doubleClickListener.onItemDoubleClick(item, currentPos);
                 } else {
-                    if (selectedPositions.contains(position)) {
-                        selectedPositions.remove(position);
+                    if (selectedPositions.contains(currentPos)) {
+                        selectedPositions.remove(currentPos);
                     } else {
-                        selectedPositions.add(position);
+                        selectedPositions.add(currentPos);
                     }
-                    notifyItemChanged(position);
+                    notifyItemChanged(currentPos);
                     selectionListener.onSelectionChanged(selectedPositions.size());
                 }
                 lastClickTime = clickTime;

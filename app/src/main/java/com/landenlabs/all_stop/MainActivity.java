@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.show_pkg).setOnClickListener(this);
         findViewById(R.id.show_proc).setOnClickListener(this);
         findViewById(R.id.stop_apps).setOnClickListener(this);
-        findViewById(R.id.stop_services).setOnClickListener(this);
+        findViewById(R.id.find_running).setOnClickListener(this);
         findViewById(R.id.EditBlackList).setOnClickListener(this);
         findViewById(R.id.settings_icon).setOnClickListener(this);
         sortBtn.setOnClickListener(this);
@@ -180,9 +180,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else {
                 showAccessibilityDialog();
             }
-        } else if (id == R.id.stop_services) {
+        } else if (id == R.id.find_running) {
+            if (isAccessibilityServiceEnabled()) {
+                appProcessManager.scanProcesses();
+                updateList();
+            }
+            /* Keep for later
             final Intent intentStopService = new Intent(MainActivity.this, StopService.class);
             startService(intentStopService);
+             */
         } else if (id == R.id.EditBlackList) {
             final Intent intentStopList = new Intent(MainActivity.this, SafeListActivity.class);
             startActivity(intentStopList);

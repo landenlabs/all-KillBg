@@ -11,132 +11,124 @@
 
     <TextView
         android:id="@+id/title"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/manage_lists_title"
         android:textSize="20sp"
         android:textStyle="bold"
         android:gravity="center"
         android:padding="8dp"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/expand_desc_btn" />
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline"
+    <ImageButton
+        android:id="@+id/expand_desc_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.5" />
+        android:padding="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/arrow_down_float"
+        app:layout_constraintTop_toTopOf="@id/title"
+        app:layout_constraintBottom_toBottomOf="@id/title"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="Expand or Collapse Description" />
 
-    <!-- Left Column (Stop List) -->
     <TextView
-        android:id="@+id/stop_list_label"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="@string/stop_list_label"
+        android:id="@+id/desc"
+        android:text="App names to automatically stop.\n
+The 'Stop' list select those to include.\n
+The 'Safe' list excludes apps\n
+Can use patterns, ex Google.*\n
+  .=any character, *=zero or more, +=1 or more\n"
         android:gravity="center"
-        android:paddingTop="8dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/title"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/guideline" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/stop_recycler"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_margin="4dp"
-        android:background="@color/regex_list_bg"
-        app:layout_constraintTop_toBottomOf="@id/stop_list_label"
-        app:layout_constraintBottom_toTopOf="@id/stop_bar"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/guideline" />
-
-    <LinearLayout
-        android:id="@+id/stop_bar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/guideline">
-
-        <ImageButton
-            android:id="@+id/add_stop"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_input_add"
-            android:contentDescription="Add Stop Pattern" />
-
-        <ImageButton
-            android:id="@+id/del_stop"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:enabled="false"
-            android:src="@android:drawable/ic_delete"
-            android:contentDescription="Delete Selected Stop Patterns" />
-
-        <ImageButton
-            android:id="@+id/clear_stop"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:contentDescription="Clear All Stop Patterns" />
-    </LinearLayout>
-
-    <!-- Right Column (Safe List) -->
-    <TextView
-        android:id="@+id/safe_list_label"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="@string/safe_list_label"
-        android:gravity="center"
-        android:paddingTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/title"
-        app:layout_constraintStart_toEndOf="@id/guideline"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/safe_recycler"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_margin="4dp"
-        android:background="@color/regex_list_bg"
-        app:layout_constraintTop_toBottomOf="@id/safe_list_label"
-        app:layout_constraintBottom_toTopOf="@id/safe_bar"
-        app:layout_constraintStart_toEndOf="@id/guideline"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <LinearLayout
-        android:id="@+id/safe_bar"
-        android:layout_width="0dp"
+    <RadioGroup
+        android:id="@+id/list_toggle_group"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:orientation="horizontal"
-        android:gravity="center"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/guideline"
+        app:layout_constraintTop_toBottomOf="@id/desc"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <RadioButton
+            android:id="@+id/toggle_stop"
+            style="@style/Btn20"
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:button="@null"
+            android:checked="true"
+            android:paddingHorizontal="16dp"
+            android:text="@string/stop_list_short" />
+
+        <RadioButton
+            android:id="@+id/toggle_safe"
+            style="@style/Btn20"
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:button="@null"
+            android:paddingHorizontal="16dp"
+            android:text="@string/safe_list_short" />
+
+    </RadioGroup>
+
+    <!-- Shared List Area -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/regex_recycler"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_margin="4dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/regex_list_bg"
+        app:layout_constraintTop_toBottomOf="@id/list_toggle_group"
+        app:layout_constraintBottom_toTopOf="@id/shared_control_bar" />
+
+    <LinearLayout
+        android:id="@+id/shared_control_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="8dp"
+        android:background="@color/bot_bar_bg"
+        app:layout_constraintBottom_toBottomOf="parent">
+
         <ImageButton
-            android:id="@+id/add_safe"
+            android:id="@+id/add_pattern_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_input_add"
-            android:contentDescription="Add Safe Pattern" />
+            android:contentDescription="Add Pattern" />
 
         <ImageButton
-            android:id="@+id/del_safe"
+            android:id="@+id/del_pattern_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:padding="12dp"
             android:enabled="false"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_delete"
-            android:contentDescription="Delete Selected Safe Patterns" />
+            android:contentDescription="Delete Selected Patterns" />
 
         <ImageButton
-            android:id="@+id/clear_safe"
+            android:id="@+id/clear_pattern_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:contentDescription="Clear All Safe Patterns" />
+            android:contentDescription="Clear All Patterns" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

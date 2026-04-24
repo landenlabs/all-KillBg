@@ -89,6 +89,15 @@ class AppProcessManager {
         }
     }
 
+    void scanProcesses() {
+        StopProcByAccessibilityService.setRunning(true);
+        if (dataList.size() > 0) {
+            stopProcIdx = 0;
+            // scanContinue();
+            // TODO - open every app and determine which are running and keep track of their package names. 
+        }
+    }
+
     void stopContinue() {
         if (stopProcIdx < dataList.size()) {
             ProcInfo procInfo  = dataList.get(stopProcIdx);

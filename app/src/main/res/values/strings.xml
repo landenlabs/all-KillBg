@@ -58,6 +58,8 @@
     <string name="manage_lists_title">Manage Stop and Safe List</string>
     <string name="stop_list_label">Stop List (Regex)</string>
     <string name="safe_list_label">Safe List (Regex)</string>
+    <string name="stop_list_short">Stop</string>
+    <string name="safe_list_short">Safe</string>
     <string name="add_pattern">Add Pattern</string>
     <string name="edit_pattern">Edit Pattern</string>
     <string name="regex_hint">e.g. ^com\.android\..*</string>

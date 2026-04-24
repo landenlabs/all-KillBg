@@ -27,5 +27,5 @@ public class AppConstants {
 
     public static final String PREF_THEME = "theme_mode";
 
-    public static final boolean USE_SNACKBAR = true;
+    public static final boolean USE_SNACKBAR = false;
 }

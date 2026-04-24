@@ -150,13 +150,13 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <Button
-            android:id="@+id/stop_services"
+            android:id="@+id/find_running"
             style="@style/Btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:enabled="false"
-            android:text="Stop\nService" />
+            android:text="Find\nRunning" />
 
         <Button
             android:id="@+id/EditBlackList"
