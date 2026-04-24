@@ -92,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageView sortBtn;
     private ImageView settingsBtn;
     private View stopAppsBadge;
+    private View findRunningBtn;
 
     private SortMode sortMode = SortMode.AppName;
 
@@ -138,6 +139,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         sortBtn = findViewById(R.id.sort_by);
         settingsBtn = findViewById(R.id.settings_icon);
         stopAppsBadge = findViewById(R.id.stop_apps_badge);
+        findRunningBtn = findViewById(R.id.find_running);
 
         myActivityManager = (ActivityManager) getSystemService(Activity.ACTIVITY_SERVICE);
         appPackageManager = new AppPackageManager(this);
@@ -210,21 +212,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (stopAppsBadge != null) {
             stopAppsBadge.setVisibility(isEnabled ? View.GONE : View.VISIBLE);
         }
+        if (findRunningBtn != null) {
+            findRunningBtn.setEnabled(isEnabled);
+        }
         if (settingsBtn != null) {
             if (isEnabled) {
                 settingsBtn.clearColorFilter();
             } else {
                 settingsBtn.setColorFilter(0xFFFF0000);
             }
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        updateBottomBarVisibility();
-        if (appProcessManager.isJobRunning) {
-            appProcessManager.stopContinue();
         }
     }
 
@@ -263,7 +259,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        updateBottomBarVisibility();
+        Log.i(APP_TAG, "onResume, job="+ appProcessManager.isJobRunning + " scan=" + appProcessManager.isScanRunning);
+        if (appProcessManager.isJobRunning) {
+            appProcessManager.stopContinue();
+        }
+        if (appProcessManager.isScanRunning) {
+            appProcessManager.scanContinue();
+        }
+    }
+
+    @Override
     protected void onPause() {
+        Log.i(APP_TAG, "onPause, jobRunning="+ appProcessManager.isJobRunning);
         super.onPause();
     }
 
@@ -280,6 +290,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onStop() {
+        Log.i(APP_TAG, "onStop, jobRunning="+ appProcessManager.isJobRunning);
         saveState();
         super.onStop();
     }
@@ -362,7 +373,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         android.content.DialogInterface.OnClickListener listener1 = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 if (which == 0) {
-                    AppUtils.killProcess(MainActivity.this, myActivityManager, processName);
+                    AppUtils.stopProcess(MainActivity.this, myActivityManager, processName);
                     updateList();
                     makeSnackbar(getString(R.string.stopped_for, processName));
                 } else if (which == 1) {
@@ -387,7 +398,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         new AlertDialog.Builder(MainActivity.this).setMessage(getString(R.string.stop_process_title, processName)).setPositiveButton(R.string.stop_btn, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                AppUtils.killProcess(MainActivity.this, myActivityManager, processName);
+                AppUtils.stopProcess(MainActivity.this, myActivityManager, processName);
                 updateList();
                 makeSnackbar(getString(R.string.stopped_for, processName));
             }
@@ -469,7 +480,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     makeSnackbar(getString(R.string.failed_to_load_packages, msg));
                 }
             }));
-            case Processes -> appProcessManager.loadList((mgr, status, msg) -> runOnUiThread(() -> {
+            case Processes -> appProcessManager.loadListAsync((mgr, status, msg) -> runOnUiThread(() -> {
                 if (status == AppProcessManager.ProcAction.STATUS_OK) {
                     ArrayList<ProcInfo> list = new ArrayList<>(mgr.getList());
                     Collections.sort(list, (ProcInfo a, ProcInfo b) -> switch (sortMode) {
@@ -509,14 +520,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void openAppDetailSettings(@NonNull DataItem dataItem) {
         // Manual open from list - do NOT enable automation
-        StopProcByAccessibilityService.setRunning(false);
+        StopProcByAccessibilityService.setRunning(false, StopProcByAccessibilityService.ServiceMode.SCAN);
 
         Intent intent = new Intent("android.settings.APPLICATION_DETAILS_SETTINGS", Uri.fromParts("package", dataItem.pkgName, null));
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         appDetailsLauncher.launch(intent);
         makeSnackbar(dataItem.pkgName);
     }
-
 
     private void updateMemInfo() {
         ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();

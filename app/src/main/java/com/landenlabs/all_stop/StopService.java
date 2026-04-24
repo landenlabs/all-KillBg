@@ -35,7 +35,6 @@ import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Timer;
@@ -75,7 +74,7 @@ public class StopService extends Service {
                 handler.post(() -> {
                     Log.d(TAG, "Periodic Stop check running");
                     for (String pkg : safeList) {
-                        AppUtils.killProcess(StopService.this, activityManager, pkg);
+                        AppUtils.stopProcess(StopService.this, activityManager, pkg);
                     }
                 });
             }

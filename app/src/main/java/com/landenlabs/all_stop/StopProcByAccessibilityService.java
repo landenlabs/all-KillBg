@@ -39,12 +39,29 @@ import java.util.List;
  */
 public class StopProcByAccessibilityService extends AccessibilityService {
 
+    public enum ServiceMode { STOP, SCAN }
+    private static ServiceMode sMode = ServiceMode.STOP;
+    private static final List<String> sRunningPackages = new java.util.ArrayList<>();
+    private static String sCurrentInspectedPackage = null;
+
     private String prevEventFingerprint = "";
     private static boolean sIsRunning = false;
     public static int stopCnt = 0;
 
-    public static void setRunning(boolean running) {
+    public static void setRunning(boolean running, ServiceMode mode) {
         sIsRunning = running;
+        sMode = mode;
+        if (running && mode == ServiceMode.SCAN) {
+            sRunningPackages.clear();
+        }
+    }
+
+    public static void setCurrentInspectedPackage(String pkg) {
+        sCurrentInspectedPackage = pkg;
+    }
+
+    public static List<String> getRunningPackages() {
+        return new java.util.ArrayList<>(sRunningPackages);
     }
 
     @Override
@@ -57,9 +74,11 @@ public class StopProcByAccessibilityService extends AccessibilityService {
     }
 
     private void doneWithEvent(@NonNull AccessibilityEvent event, @NonNull String msg) {
-        // Log.i(APP_TAG, msg + " [Back Action]");
+        Log.i(APP_TAG, msg + " [Back Action]");
         sIsRunning = false;
+        sleep(1000);
         performGlobalAction(GLOBAL_ACTION_BACK);
+        sleep(1000);
     }
 
     private static void sleep(long milli) {
@@ -104,16 +123,22 @@ public class StopProcByAccessibilityService extends AccessibilityService {
         AccessibilityNodeInfo node = findClickable(rootNode, null, "Force stop");
         if ( node != null ) {
             if (node.isEnabled()) {
-                // Log.w(APP_TAG, "StopProc - Force stop clicked");
-                node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                sleep(1000);    // Wait for click to popup confirmation, else will get double click.
+                if (sMode == ServiceMode.SCAN) {
+                    if (sCurrentInspectedPackage != null && !sRunningPackages.contains(sCurrentInspectedPackage)) {
+                        sRunningPackages.add(sCurrentInspectedPackage);
+                    }
+                    doneWithEvent(event, "StopProc - scanning, found running: " + sCurrentInspectedPackage);
+                } else {
+                    // Log.w(APP_TAG, "StopProc - Force stop clicked");
+                    node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                    sleep(1000);    // Wait for click to popup confirmation, else will get double click.
+                }
             } else
                 doneWithEvent(event,  "StopProc - not running");
             return;  // if force stop clicked, wait for next event to re-enter this method.
         }
-        if (findAndClick(rootNode, "android:id/button1", "OK")) {
+        if (sMode == ServiceMode.STOP && findAndClick(rootNode, "android:id/button1", "OK")) {
             stopCnt++;
-            sleep(1000);
             doneWithEvent(event,"StopProc - stopped, cnt=" + stopCnt);
         }
     }

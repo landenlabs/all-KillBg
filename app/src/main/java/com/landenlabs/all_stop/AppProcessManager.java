@@ -26,24 +26,27 @@ import static com.landenlabs.all_stop.AppConstants.APP_TAG;
 
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.app.usage.UsageStatsManager;
+import android.app.AlertDialog;
 import android.content.Context;
-import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.util.Log;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.preference.PreferenceManager;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 
 /**
  */
@@ -57,19 +60,27 @@ class AppProcessManager {
 
     private int stopProcIdx = -1;
     public boolean isJobRunning = false;
+    public boolean isScanRunning = false;
 
     public void saveToBundle(@NonNull Bundle outState) {
         outState.putBoolean("isJobRunning", isJobRunning);
+        outState.putBoolean("isScanRunning", isScanRunning);
+        outState.putInt("stopProcIdx", stopProcIdx);
+        Log.i(APP_TAG, "saveToBundle, job="+ isJobRunning + " scan=" + isScanRunning + " idx=" + stopProcIdx);
     }
 
     public void loadFromBundle(@Nullable Bundle inState) {
         if (inState != null) {
             isJobRunning = inState.getBoolean("isJobRunning");
+            isScanRunning = inState.getBoolean("isScanRunning");
+            stopProcIdx = inState.getInt("stopProcIdx", -1);
         }
-        if (stopProcIdx == -1 && dataList.isEmpty()) {
+        
+        if ((isJobRunning || isScanRunning) && dataList.isEmpty()) {
              loadList(null);
-             stopProcIdx = 0;
+             if (stopProcIdx == -1) stopProcIdx = 0;
         }
+        Log.i(APP_TAG, "loadFromBundle, job="+ isJobRunning + " scan=" + isScanRunning + " idx=" + stopProcIdx);
     }
 
     public interface ProcAction extends AppAction {
@@ -82,7 +93,7 @@ class AppProcessManager {
     }
 
     void stopProcesses() {
-        StopProcByAccessibilityService.setRunning(true);
+        StopProcByAccessibilityService.setRunning(dataList.size() > 0, StopProcByAccessibilityService.ServiceMode.STOP);
         if (dataList.size() > 0) {
             stopProcIdx = 0;
             stopContinue();
@@ -90,11 +101,11 @@ class AppProcessManager {
     }
 
     void scanProcesses() {
-        StopProcByAccessibilityService.setRunning(true);
+        StopProcByAccessibilityService.setRunning(dataList.size() > 0, StopProcByAccessibilityService.ServiceMode.SCAN);
         if (dataList.size() > 0) {
             stopProcIdx = 0;
-            // scanContinue();
-            // TODO - open every app and determine which are running and keep track of their package names. 
+            isScanRunning = true;
+            scanContinue();
         }
     }
 
@@ -102,13 +113,14 @@ class AppProcessManager {
         if (stopProcIdx < dataList.size()) {
             ProcInfo procInfo  = dataList.get(stopProcIdx);
             String pkgName = procInfo.pkgName != null ? procInfo.pkgName : procInfo.name;
-            Log.d(APP_TAG, "Stopping: " + pkgName);
+            Log.d(APP_TAG, String.format(Locale.US, "%s %s %d of %d", "Stopping:", pkgName, stopProcIdx, dataList.size()));
 
             // Use helper to stop/open settings
             if (!pkgName.equals(context.getPackageName())) {
                 isJobRunning = true;
-                StopProcByAccessibilityService.setRunning(true);
-                AppUtils.killProcess(context, activityManager, pkgName);
+                StopProcByAccessibilityService.setCurrentInspectedPackage(pkgName);
+                StopProcByAccessibilityService.setRunning(true, StopProcByAccessibilityService.ServiceMode.STOP);
+                AppUtils.stopProcess(context, activityManager, pkgName);
 
                 // Note: We break here because the Accessibility Service will handle the clicks
                 // and then return to this app. MainActivity.onResume will then be called
@@ -119,8 +131,81 @@ class AppProcessManager {
             Log.d(APP_TAG, "Stopping done " + stopProcIdx + " of " + dataList.size());
             isJobRunning = false;
             stopProcIdx = -1;
-            StopProcByAccessibilityService.setRunning(false);
+            StopProcByAccessibilityService.setRunning(false, StopProcByAccessibilityService.ServiceMode.STOP);
         }
+    }
+
+    void scanContinue() {
+        if (stopProcIdx < dataList.size()) {
+            ProcInfo procInfo = dataList.get(stopProcIdx);
+            String pkgName = procInfo.pkgName != null ? procInfo.pkgName : procInfo.name;
+            Log.d(APP_TAG, String.format(Locale.US, "%s %s %d of %d", "Scanning:", pkgName, stopProcIdx, dataList.size()));
+
+            if (!pkgName.equals(context.getPackageName())) {
+                isScanRunning = true;
+                StopProcByAccessibilityService.setCurrentInspectedPackage(pkgName);
+                StopProcByAccessibilityService.setRunning(true, StopProcByAccessibilityService.ServiceMode.SCAN);
+                AppUtils.stopProcess(context, activityManager, pkgName);
+                stopProcIdx++;
+            } else {
+                stopProcIdx++;
+                scanContinue();
+            }
+        } else {
+            Log.d(APP_TAG, "Scanning done " + stopProcIdx + " of " + dataList.size());
+            isScanRunning = false;
+            stopProcIdx = -1;
+            StopProcByAccessibilityService.setRunning(false, StopProcByAccessibilityService.ServiceMode.SCAN);
+            showScanResults();
+        }
+    }
+
+    private void showScanResults() {
+        List<String> running = StopProcByAccessibilityService.getRunningPackages();
+        if (running.isEmpty()) {
+            AppUtils.showStatus(findViewById(android.R.id.content), "No running apps found during scan.");
+            return;
+        }
+
+        // Try to resolve package names to labels for better UI
+        String[] displayNames = new String[running.size()];
+        for (int i = 0; i < running.size(); i++) {
+            String pkg = running.get(i);
+            try {
+                displayNames[i] = context.getPackageManager().getApplicationLabel(
+                        context.getPackageManager().getApplicationInfo(pkg, 0)).toString();
+            } catch (Exception e) {
+                displayNames[i] = pkg;
+            }
+        }
+
+        final boolean[] checked = new boolean[running.size()];
+        java.util.Arrays.fill(checked, true);
+
+        new AlertDialog.Builder(context)
+                .setTitle("Scan Results - Running Apps")
+                .setMultiChoiceItems(displayNames, checked, (dialog, which, isChecked) -> checked[which] = isChecked)
+                .setPositiveButton("Add to Stop List", (dialog, which) -> {
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+                    Set<String> stopList = new HashSet<>(prefs.getStringSet("stop_regex_list", new HashSet<>()));
+                    int addedCount = 0;
+                    for (int i = 0; i < running.size(); i++) {
+                        if (checked[i]) {
+                            // Add as exact match regex
+                            if (stopList.add("^" + Pattern.quote(running.get(i)) + "$")) {
+                                addedCount++;
+                            }
+                        }
+                    }
+                    prefs.edit().putStringSet("stop_regex_list", stopList).apply();
+                    AppUtils.showStatus(findViewById(android.R.id.content), "Added " + addedCount + " items to Stop List");
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private View findViewById(int id) {
+        return ((Activity)context).findViewById(id);
     }
 
     @NonNull
@@ -128,32 +213,34 @@ class AppProcessManager {
         return dataList;
     }
 
-    synchronized void loadList(@Nullable ProcAction action) {
-        executorService.execute(() -> {
-            synchronized (dataList) {
-                dataList.clear();
+    synchronized void loadListAsync(@Nullable ProcAction action) {
+        executorService.execute(() -> { loadList(action); });
+    }
 
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
-                    // Fallback: If no usage stats (maybe permission missing), show all installed apps
-                    loadInstalledApps();
-                } else {
-                    // Legacy fallback
-                    List<ActivityManager.RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
-                    if (processes != null) {
-                        for (ActivityManager.RunningAppProcessInfo proc : processes) {
-                            ProcInfo procInfo = new ProcInfo();
-                            procInfo.name = proc.processName;
-                            procInfo.pkgName = (proc.pkgList != null && proc.pkgList.length > 0) ? proc.pkgList[0] : proc.processName;
-                            procInfo.importance = proc.importance;
-                            procInfo.state = ProcInfo.getImportance(proc.importance);
-                            dataList.add(procInfo);
-                        }
+    void loadList(@Nullable ProcAction action) {
+        synchronized (dataList) {
+            dataList.clear();
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
+                // Fallback: If no usage stats (maybe permission missing), show all installed apps
+                loadInstalledApps();
+            } else {
+                // Legacy fallback
+                List<ActivityManager.RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
+                if (processes != null) {
+                    for (ActivityManager.RunningAppProcessInfo proc : processes) {
+                        ProcInfo procInfo = new ProcInfo();
+                        procInfo.name = proc.processName;
+                        procInfo.pkgName = (proc.pkgList != null && proc.pkgList.length > 0) ? proc.pkgList[0] : proc.processName;
+                        procInfo.importance = proc.importance;
+                        procInfo.state = ProcInfo.getImportance(proc.importance);
+                        dataList.add(procInfo);
                     }
                 }
             }
-            if (action != null)
-                action.done(this, dataList.isEmpty() ? ProcAction.STATUS_ERROR : ProcAction.STATUS_OK, "");
-        });
+        }
+        if (action != null)
+            action.done(this, dataList.isEmpty() ? ProcAction.STATUS_ERROR : ProcAction.STATUS_OK, "");
     }
 
     private void loadInstalledApps() {

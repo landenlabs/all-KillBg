@@ -57,16 +57,11 @@ public class AppUtils {
      * @param am      The ActivityManager to use for killing processes.
      * @param pkgName The package name of the app to stop.
      */
-    public static void killProcess(@NonNull Context context, @NonNull ActivityManager am, @NonNull String pkgName) {
-        if (Build.VERSION.SDK_INT <= 14) {
-            // Standard background kill (effective on very old Android versions)
-            am.killBackgroundProcesses(pkgName);
-        } else {
-            // Open App Info to trigger manual stop or accessibility automation
-            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            intent.setData(Uri.parse("package:" + pkgName));
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
-        }
+    public static void stopProcess(@NonNull Context context, @NonNull ActivityManager am, @NonNull String pkgName) {
+        // Open App Info to trigger manual stop or accessibility automation
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        intent.setData(Uri.parse("package:" + pkgName));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
     }
 }
